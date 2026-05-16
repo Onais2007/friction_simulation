@@ -251,7 +251,7 @@ body.ar #rMukFit,body.ar #nodata,body.ar #swNote{font-family:'Tajawal',sans-seri
         <div class="ctitle" style="--blue:#4f8ef7;margin-bottom:0" id="t-recData">Recorded Data</div>
         <button onclick="randomizeCoeffs()" style="font-size:10px;padding:3px 8px;
           background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.3);color:var(--orange)"
-          title="Randomize μs and μk for a new practice run" id="t-newChallenge">🎲 New Challenge</button>
+          id="t-newChallenge">🎲 New Challenge</button>
       </div>
       <!-- Scrollable table wrapper — fixed height so it never pushes graph down -->
       <div style="max-height:120px;overflow-y:auto;border-radius:4px">
@@ -271,11 +271,11 @@ body.ar #rMukFit,body.ar #nodata,body.ar #swNote{font-family:'Tajawal',sans-seri
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div class="ctitle" style="--blue:#f97316;margin-bottom:0" id="t-graphTitle">d vs t² — Student Graph</div>
       <div style="display:flex;gap:6px">
-        <button id="btnModePlot" onclick="setGraphMode('plot')" style="font-size:10px;padding:4px 10px;background:rgba(79,142,247,.15);border-color:rgba(79,142,247,.4);color:var(--blue)">● Plot points</button>
-        <button id="btnModeLine" onclick="setGraphMode('line')" style="font-size:10px;padding:4px 10px">⟋ Draw line</button>
-        <button onclick="undoLastDot()" style="font-size:10px;padding:4px 10px" title="Undo last plotted point">↩ Undo</button>
-        <button onclick="clearGraph()" style="font-size:10px;padding:4px 10px">✕ Clear all</button>
-        <button onclick="exportGraph()" style="font-size:10px;padding:4px 10px;background:rgba(34,211,160,.1);border-color:rgba(34,211,160,.3);color:var(--green)" title="Download graph as image">⬇ Export</button>
+        <button id="t-btnPlot" onclick="setGraphMode('plot')" style="font-size:10px;padding:4px 10px;background:rgba(79,142,247,.15);border-color:rgba(79,142,247,.4);color:var(--blue)">● Plot points</button>
+        <button id="t-btnLine" onclick="setGraphMode('line')" style="font-size:10px;padding:4px 10px">⟋ Draw line</button>
+        <button onclick="undoLastDot()" style="font-size:10px;padding:4px 10px" id="t-btnUndo">↩ Undo</button>
+        <button onclick="clearGraph()" style="font-size:10px;padding:4px 10px" id="t-btnClear">✕ Clear all</button>
+        <button onclick="exportGraph()" style="font-size:10px;padding:4px 10px;background:rgba(34,211,160,.1);border-color:rgba(34,211,160,.3);color:var(--green)" id="t-btnExport">⬇ Export</button>
       </div>
     </div>
     <div id="graphHint" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px;min-height:28px;line-height:1.6">
@@ -285,13 +285,13 @@ body.ar #rMukFit,body.ar #nodata,body.ar #swNote{font-family:'Tajawal',sans-seri
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;padding:8px 10px;background:var(--surf2);border:1px solid var(--bord);border-radius:8px">
       <div>
         <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px">
-          t² max (x-axis) <span style="color:var(--blue);font-weight:700" id="xMaxOut">12 s²</span>
+          <span id="t-xAxisLabel">t² max (x-axis)</span> <span style="color:var(--blue);font-weight:700" id="xMaxOut">12 s²</span>
         </div>
         <input type="range" id="xMaxSl" min="2" max="60" value="12" step="1" oninput="axisRangeChange()">
       </div>
       <div>
         <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px">
-          d max (y-axis) <span style="color:var(--orange);font-weight:700" id="yMaxOut">5 m</span>
+          <span id="t-yAxisLabel">d max (y-axis)</span> <span style="color:var(--orange);font-weight:700" id="yMaxOut">5 m</span>
         </div>
         <input type="range" class="o" id="yMaxSl" min="1" max="20" value="5" step="0.5" oninput="axisRangeChange()">
       </div>
@@ -506,7 +506,7 @@ function randomizeCoeffs(){
   swElapsed=0; boxT=0.45;
   stopSliding(false);
   document.getElementById('swDisp').textContent='0.000';
-  document.getElementById('swNote').textContent='raise θ past critical angle to slide';
+  document.getElementById('swNote').textContent=t('swNoteStatic');
   document.getElementById('ansMusInput').value='';
   document.getElementById('ansMukInput').value='';
   document.getElementById('ansMusInput').className='ans-input';
@@ -514,7 +514,7 @@ function randomizeCoeffs(){
   document.getElementById('gradeMusResult').textContent='';
   document.getElementById('gradeMukResult').textContent='';
   document.getElementById('sbadge').innerHTML='';
-  document.getElementById('rMukFit').textContent='draw line on graph →';
+  document.getElementById('rMukFit').textContent=t('rMukDefault');
   renderTable(); drawGraph(); onAngleOrMuChange();
 }
 
@@ -577,16 +577,16 @@ function update(){
   if(simRunning){
     dot.className='sdot st';
     txt.innerHTML = labMode
-      ? `<b>SLIDING</b> — lower θ to stop the box`
-      : `<b>SLIDING</b> — stops below θ=${p.stopDeg.toFixed(1)}° (= arctan μk)`;
+      ? `<b>${t('statusSlide')}</b> — ${t('statusSlideHint')}`
+      : `<b>${t('statusSlide')}</b> — stops below θ=${p.stopDeg.toFixed(1)}° (= arctan μk)`;
   } else if(dragging){
     dot.className='sdot st';
-    txt.innerHTML=`<b>DRAG</b> — d from foot = ${p.dist.toFixed(2)} m`;
+    txt.innerHTML=`<b>${t('statusDrag')}</b> — d = ${p.dist.toFixed(2)} m`;
   } else {
     dot.className='sdot st';
     txt.innerHTML = labMode
-      ? `<b>STATIC</b> — increase θ until box slides`
-      : `<b>STATIC</b> — slides above θ=${p.critDeg.toFixed(1)}° | stops below θ=${p.stopDeg.toFixed(1)}°`;
+      ? `<b>${t('statusStatic')}</b> — ${t('statusStaticHint')}`
+      : `<b>${t('statusStatic')}</b> — slides above θ=${p.critDeg.toFixed(1)}° | stops below θ=${p.stopDeg.toFixed(1)}°`;
   }
 
   // check-mode true value display
@@ -601,16 +601,11 @@ function update(){
   document.getElementById('musVal').className = p.sliding ? 'rv o' : 'rv g';
   document.getElementById('musVal').textContent = `θ_c = ${critDeg}° → μs = ${mus.toFixed(3)}`;
 
-  // student results panel — just update critical angle observation
+  // student results panel
   if(p.sliding || simRunning){
-    document.getElementById('rCritObs').textContent = angle+'° (currently sliding)';
+    document.getElementById('rCritObs').textContent = t('critObs_sliding', (+angle).toFixed(1));
   } else {
-    const aboveCrit = angle >= p.critDeg;
-    if(aboveCrit){
-      document.getElementById('rCritObs').textContent = '≈ '+angle+'° (at boundary)';
-    } else {
-      document.getElementById('rCritObs').textContent = 'increase θ until box slides';
-    }
+    document.getElementById('rCritObs').textContent = t('critObs_static');
   }
 
   render(p);
@@ -632,7 +627,7 @@ function startSliding(p){
   simStartMs  = performance.now();
   swElapsed   = 0;
   document.getElementById('swDisp').className='swt run';
-  document.getElementById('swNote').textContent='sliding… — press Record anytime';
+  document.getElementById('swNote').textContent=t('swNoteSliding');
   animRafId = requestAnimationFrame(animFrame);
 }
 
@@ -666,45 +661,41 @@ function stopSliding(reachedFoot){
   cancelAnimationFrame(animRafId);
   document.getElementById('swDisp').className='swt';
   document.getElementById('swNote').textContent = reachedFoot
-    ? 'box reached foot — drag box up & raise θ again'
-    : 'angle lowered — raise θ again to slide';
+    ? t('swNoteStopped') : t('swNoteStatic');
 }
 
 /* ── RECORD ── does NOT stop the animation ── */
 function recordPt(){
   if(swElapsed < 0.05){
-    alert('No slide time yet. Raise θ above the critical angle first.'); return;
+    alert(lang==='ar' ? 'لا يوجد وقت بعد. ارفع θ فوق الزاوية الحرجة أولاً.' : 'No slide time yet. Raise θ above the critical angle first.'); return;
   }
-  const t = swElapsed;
-  const t2 = t * t;
-  const d  = (boxT - simStartT) * MAX_M;   // metres actually travelled so far
-  if(d < 0.05){ alert('Box has barely moved. Wait a moment or increase θ.'); return; }
+  const elapsed = swElapsed;
+  const t2 = elapsed * elapsed;
+  const d  = (boxT - simStartT) * MAX_M;
+  if(d < 0.05){ alert(lang==='ar' ? 'الصندوق لم يتحرك كثيراً. انتظر أو زد θ.' : 'Box has barely moved. Wait a moment or increase θ.'); return; }
   const a_m  = 2*d/t2;
   const thr  = angle*Math.PI/180;
   const mk_e = Math.max(0, Math.tan(thr) - a_m/(G*Math.cos(thr)));
-  dataPoints.push({d, t, t2, mk_e, angle});
+  dataPoints.push({d, t:elapsed, t2, mk_e, angle});
 
-  // reset stopwatch reference to NOW so next record is a fresh segment
-  // (student can record multiple times in one slide)
   simStartT  = boxT;
   simStartMs = performance.now();
   swElapsed  = 0;
   document.getElementById('swDisp').textContent='0.000';
-  document.getElementById('swNote').textContent='recorded ✓ — keep sliding or drag again';
+  document.getElementById('swNote').textContent=t('swNoteRecorded');
 
   renderTable();
   drawGraph();
-  // do NOT stop animation — box keeps going
 }
 
-/* ── RESET ── stops animation, returns box to start position ── */
+/* ── RESET ── */
 function doReset(){
   stopSliding(false);
   swElapsed = 0;
-  boxT = simStartT > 0 ? simStartT : boxT;  // keep box where it was dragged
+  boxT = simStartT > 0 ? simStartT : boxT;
   document.getElementById('swDisp').textContent='0.000';
   document.getElementById('swDisp').className='swt';
-  document.getElementById('swNote').textContent='raise θ past critical angle to slide';
+  document.getElementById('swNote').textContent=t('swNoteStatic');
   update();
 }
 
@@ -959,8 +950,8 @@ const GP = {l:52, r:16, t:16, b:38};
 
 function setGraphMode(m){
   graphMode = m;
-  const btnPlot = document.getElementById('btnModePlot');
-  const btnLine = document.getElementById('btnModeLine');
+  const btnPlot = document.getElementById('t-btnPlot');
+  const btnLine = document.getElementById('t-btnLine');
   btnPlot.style.background = m==='plot' ? 'rgba(79,142,247,.15)' : 'transparent';
   btnPlot.style.borderColor= m==='plot' ? 'rgba(79,142,247,.4)'  : 'var(--bord)';
   btnPlot.style.color      = m==='plot' ? 'var(--blue)' : 'var(--muted)';
@@ -969,15 +960,12 @@ function setGraphMode(m){
   btnLine.style.color      = m==='line' ? 'var(--green)' : 'var(--muted)';
   gc.style.cursor = 'crosshair';
   if(m==='plot'){
-    document.getElementById('graphHint').innerHTML =
-      'Read (t², d) from the table → click on the grid to plot each data point.';
+    document.getElementById('graphHint').innerHTML = t('graphHintDefault');
   } else {
     if(linePhase===2){
-      document.getElementById('graphHint').innerHTML =
-        'Line drawn. Click <b style="color:#ef4444">✕ Clear all</b> to redraw.';
+      document.getElementById('graphHint').innerHTML = t('graphHintLineDone');
     } else {
-      document.getElementById('graphHint').innerHTML =
-        'Click <b style="color:#22d3a0">anchor 1</b> then <b style="color:#22d3a0">anchor 2</b> to draw your best-fit line.';
+      document.getElementById('graphHint').innerHTML = t('graphHintA1');
     }
   }
   drawGraph();
@@ -1085,7 +1073,7 @@ function exportGraph(){
   // footer bar
   ec.fillStyle='#171b26'; ec.fillRect(0,H,W,28);
   ec.fillStyle='#6b7a99'; ec.font='10px JetBrains Mono,monospace'; ec.textAlign='left';
-  ec.fillText(`θ=${(+angle).toFixed(1)}°  m=${mass}kg  |  Friction Lab — Designed by: Onais Madkhali`,10,H+18);
+  ec.fillText(`θ=${(+angle).toFixed(1)}°  m=${mass}kg  |  Friction Lab — Created by: Onais Madkhali`,10,H+18);
   if(studentLine){
     const {p1,p2}=studentLine;
     const slope=(p2.gy-p1.gy)/(p2.gx-p1.gx);
@@ -1122,29 +1110,23 @@ function undoLastDot(){
     studentLine=null;
     linePhase=1;  // keep pendingP1 so student only needs to re-click anchor 2
     document.getElementById('sbadge').innerHTML='';
-    document.getElementById('rMukFit').textContent='draw line on graph →';
-    document.getElementById('graphHint').innerHTML=
-      '↩ Line removed. Click <b style="color:#22d3a0">anchor 2</b> to redraw.';
+    document.getElementById('rMukFit').textContent=t('rMukDefault');
+    document.getElementById('graphHint').innerHTML=t('undoLine');
     setGraphMode('line');
     drawGraph();
     return;
   }
-  // If waiting for anchor 2 → remove anchor 1, back to phase 0
   if(linePhase===1 && pendingP1){
     pendingP1=null;
     linePhase=0;
-    document.getElementById('graphHint').innerHTML=
-      '↩ Anchor removed. Click <b style="color:#22d3a0">anchor 1</b> to start again.';
+    document.getElementById('graphHint').innerHTML=t('undoAnchor');
     drawGraph();
     return;
   }
-  // Otherwise remove last plotted dot
   if(studentDots.length>0){
     studentDots.pop();
     const n=studentDots.length;
-    document.getElementById('graphHint').innerHTML = n
-      ? `↩ Point removed. ${n} point${n>1?'s':''} remaining.`
-      : '↩ All points removed. Read (t², d) from the table → click to plot.';
+    document.getElementById('graphHint').innerHTML=t('undoDot',n);
     drawGraph();
   }
 }
@@ -1275,19 +1257,19 @@ gc.addEventListener('touchend',e=>{
   if(graphMode==='plot'){
     studentDots.push({gx:raw.gx,gy:raw.gy});
     const n=studentDots.length;
-    document.getElementById('graphHint').innerHTML=`${n} point${n>1?'s':''} plotted. Switch to <b style="color:#22d3a0">⟋ Draw line</b> when ready.`;
+    document.getElementById('graphHint').innerHTML=t('plotDone',n);
     drawGraph();
   } else {
     if(linePhase===2) return;
     if(linePhase===0){
       pendingP1=raw;linePhase=1;
-      document.getElementById('graphHint').innerHTML='✓ Anchor 1 set. Tap anchor 2 to complete line.';
+      document.getElementById('graphHint').innerHTML=t('graphHintA1Done');
       drawGraph();
     } else {
       if(Math.abs(raw.gx-pendingP1.gx)<1e-9){drawGraph();return;}
       studentLine={p1:pendingP1,p2:raw};linePhase=2;
       computeStudentSlope();
-      document.getElementById('graphHint').innerHTML='✓ Line drawn — drag anchors to fine-tune.';
+      document.getElementById('graphHint').innerHTML=t('graphHintLineDone');
       drawGraph();
     }
   }
@@ -1299,31 +1281,28 @@ gc.addEventListener('click',e=>{
   const cx=e.clientX-rect.left, cy=e.clientY-rect.top;
   const {W,H}=gcCssSize();
   if(cx<GP.l||cx>W-GP.r||cy<GP.t||cy>H-GP.b) return;
-  const raw=canvasToData(cx,cy);  // exact position, no snapping
+  const raw=canvasToData(cx,cy);
 
   if(graphMode==='plot'){
     studentDots.push({gx:raw.gx, gy:raw.gy});
     const n=studentDots.length;
-    document.getElementById('graphHint').innerHTML=
-      `${n} point${n>1?'s':''} plotted. Switch to <b style="color:#22d3a0">⟋ Draw line</b> when ready.`;
+    document.getElementById('graphHint').innerHTML=t('plotDone',n);
     drawGraph();
   } else {
     if(linePhase===2) return;
     if(linePhase===0){
       pendingP1=raw; linePhase=1;
-      document.getElementById('graphHint').innerHTML=
-        '✓ Anchor 1 set. Click <b style="color:#22d3a0">anchor 2</b> to complete the line.';
+      document.getElementById('graphHint').innerHTML=t('graphHintA1Done');
       drawGraph();
     } else {
       if(Math.abs(raw.gx-pendingP1.gx)<1e-9){
-        document.getElementById('graphHint').innerHTML='⚠ Click further along x-axis.';
+        document.getElementById('graphHint').innerHTML=t('warnX');
         return;
       }
       studentLine={p1:pendingP1,p2:raw};
       linePhase=2;
       computeStudentSlope();
-      document.getElementById('graphHint').innerHTML=
-        '✓ Line drawn — <b style="color:#22d3a0">drag the anchors</b> to fine-tune it.';
+      document.getElementById('graphHint').innerHTML=t('graphHintLineDone');
       drawGraph();
     }
   }
@@ -1584,6 +1563,14 @@ const TR = {
     'trueVals':     'True values (Check Mode)',
     'closestMat':   'Closest real-world surface pair',
     'graphTitle':   'd vs t² — Student Graph',
+    'btnPlot':      '● Plot points',
+    'btnLine':      '⟋ Draw line',
+    'btnUndo':      '↩ Undo',
+    'btnClear':     '✕ Clear all',
+    'btnExport':    '⬇ Export',
+    'newChallengeTitle': 'Randomize μs and μk for a new practice run',
+    'xAxisLabel':   't² max (x-axis)',
+    'yAxisLabel':   'd max (y-axis)',
     'swNoteStatic': 'raise θ past critical angle to slide',
     'swNoteSliding':'sliding… — press Record anytime',
     'swNoteStopped':'stopped — Record or drag box & raise θ again',
@@ -1600,12 +1587,17 @@ const TR = {
     'graphHintA1':  'Click <b style="color:#22d3a0">anchor 1</b> then <b style="color:#22d3a0">anchor 2</b> to draw your best-fit line.',
     'graphHintA1Done':'✓ Anchor 1 set. Click <b style="color:#22d3a0">anchor 2</b> to complete the line.',
     'graphHintLineDone':'✓ Line drawn — <b style="color:#22d3a0">drag the anchors</b> to fine-tune it.',
+    'undoLine':  '↩ Line removed. Click <b style="color:#22d3a0">anchor 2</b> to redraw.',
+    'undoAnchor':'↩ Anchor removed. Click <b style="color:#22d3a0">anchor 1</b> to start again.',
+    'undoDot':   (n)=>n ? `↩ Point removed. ${n} point${n>1?'s':''} remaining.` : '↩ All points removed. Read (t², d) from the table → click to plot.',
+    'warnX':     '⚠ Click further along x-axis.',
+    'plotDone':  (n)=>`${n} point${n>1?'s':''} plotted. Switch to <b style="color:#22d3a0">⟋ Draw line</b> when ready.`,
     'critObs_sliding':  (a)=>`${a}° (currently sliding)`,
     'critObs_static':   'increase θ until box slides',
   },
   ar: {
     'title':        'مستوى مائل · مختبر الاحتكاك',
-    'credit':       'إعداد: أنس مدخلي',
+    'credit':       'إعداد: أُنيس مدخلي',
     'labMode':      'وضع التجربة',
     'checkMode':    'وضع التحقق',
     'langBtn':      'English',
@@ -1645,6 +1637,14 @@ const TR = {
     'trueVals':     'القيم الحقيقية (وضع التحقق)',
     'closestMat':   'أقرب زوج سطحي في الواقع',
     'graphTitle':   'd مقابل t² — الرسم البياني',
+    'btnPlot':      '● رسم النقاط',
+    'btnLine':      '⟋ رسم الخط',
+    'btnUndo':      '↩ تراجع',
+    'btnClear':     '✕ مسح الكل',
+    'btnExport':    '⬇ تصدير',
+    'newChallengeTitle': 'عشوائية لـ μs و μk لتجربة جديدة',
+    'xAxisLabel':   'الحد الأقصى t² (المحور الأفقي)',
+    'yAxisLabel':   'الحد الأقصى d (المحور الرأسي)',
     'swNoteStatic': 'ارفع θ فوق الزاوية الحرجة لبدء الانزلاق',
     'swNoteSliding':'يتحرك… اضغط تسجيل في أي وقت',
     'swNoteStopped':'توقف — سجّل أو اسحب الصندوق وارفع θ مجدداً',
@@ -1661,6 +1661,11 @@ const TR = {
     'graphHintA1':  'انقر <b style="color:#22d3a0">النقطة 1</b> ثم <b style="color:#22d3a0">النقطة 2</b> لرسم الخط.',
     'graphHintA1Done':'✓ النقطة 1 محددة. انقر <b style="color:#22d3a0">النقطة 2</b> لإكمال الخط.',
     'graphHintLineDone':'✓ تم رسم الخط — <b style="color:#22d3a0">اسحب النقاط</b> لضبط الخط.',
+    'undoLine':  '↩ تم حذف الخط. انقر <b style="color:#22d3a0">النقطة 2</b> لإعادة الرسم.',
+    'undoAnchor':'↩ تم حذف النقطة. انقر <b style="color:#22d3a0">النقطة 1</b> للبدء مجدداً.',
+    'undoDot':   (n)=>n ? `↩ تم حذف نقطة. ${n} نقطة متبقية.` : '↩ تم حذف جميع النقاط.',
+    'warnX':     '⚠ انقر أبعد على محور x.',
+    'plotDone':  (n)=>`تم رسم ${n} نقطة. حوّل إلى <b style="color:#22d3a0">⟋ رسم الخط</b> عند الانتهاء.`,
     'critObs_sliding':  (a)=>`${a}° (يتحرك الآن)`,
     'critObs_static':   'زد θ حتى يبدأ الصندوق بالانزلاق',
   }
@@ -1714,13 +1719,25 @@ function applyLang(){
     't-trueVals':     t('trueVals'),
     't-closestMat':   t('closestMat'),
     't-graphTitle':   t('graphTitle'),
+    't-btnPlot':      t('btnPlot'),
+    't-btnLine':      t('btnLine'),
+    't-btnUndo':      t('btnUndo'),
+    't-btnClear':     t('btnClear'),
+    't-btnExport':    t('btnExport'),
+    't-xAxisLabel':   t('xAxisLabel'),
+    't-yAxisLabel':   t('yAxisLabel'),
   };
   Object.entries(map).forEach(([id,html])=>{
     const el=document.getElementById(id);
     if(el) el.innerHTML=html;
   });
 
-  // re-attach aOut after innerHTML replacement of t-angleLabel
+  // update title attributes (tooltips)
+  const ncBtn = document.getElementById('t-newChallenge');
+  if(ncBtn) ncBtn.title = t('newChallengeTitle');
+
+  // re-apply graph mode button styles (they lost their IDs from setGraphMode)
+  setGraphMode(graphMode);
   document.getElementById('aSl').oninput = e => {
     angle = +e.target.value;
     const el = document.getElementById('aOut');
@@ -1763,6 +1780,7 @@ function toggleLang(){
 
 /* ── init ── */
 resize();
+applyLang();
 update();
 </script>
 </body>
