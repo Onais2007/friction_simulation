@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friction Lab — Inclined Plane</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;800&family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1117;--surf:#171b26;--surf2:#1e2333;--bord:#2a3050;
+  --blue:#4f8ef7;--orange:#f97316;--green:#22d3a0;--yellow:#fbbf24;--red:#ef4444;
+  --txt:#e8eaf0;--muted:#6b7a99;--dim:#3d4a6b;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(79,142,247,.04) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(79,142,247,.04) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:18px 16px}
+
+/* header */
+header{display:flex;align-items:center;gap:14px;margin-bottom:16px;
+  padding-bottom:14px;border-bottom:1px solid var(--bord);flex-wrap:wrap}
+h1{font-size:19px;font-weight:800;letter-spacing:-.5px;margin-right:auto}
+.hsub{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* mode toggle */
+.mode-toggle{display:flex;border:1px solid var(--bord);border-radius:8px;overflow:hidden;flex-shrink:0}
+.mode-btn{padding:7px 16px;font-family:var(--mono);font-size:11px;font-weight:700;
+  cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s;letter-spacing:.04em}
+.mode-btn.active-lab{background:rgba(34,211,160,.15);color:var(--green)}
+.mode-btn.active-check{background:rgba(249,115,22,.15);color:var(--orange)}
+
+.layout{display:grid;grid-template-columns:1fr 300px;gap:14px}
+.left{display:flex;flex-direction:column;gap:12px}
+
+.card{background:var(--surf);border:1px solid var(--bord);border-radius:12px;padding:14px 16px}
+.ctitle{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--muted);
+  text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.ctitle::before{content:'';width:3px;height:11px;border-radius:2px;background:var(--blue)}
+
+.ctrl{margin-bottom:11px}.ctrl:last-of-type{margin-bottom:0}
+.clbl{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:5px;font-size:12px;color:var(--muted)}
+.cv{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue)}
+.cv.o{color:var(--orange)}.cv.g{color:var(--green)}
+
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;
+  background:var(--bord);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+  border-radius:50%;background:var(--blue);border:2px solid var(--bg);
+  box-shadow:0 0 0 2px var(--blue);transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+input[type=range].o::-webkit-slider-thumb{background:var(--orange);box-shadow:0 0 0 2px var(--orange)}
+input[type=range].g::-webkit-slider-thumb{background:var(--green);box-shadow:0 0 0 2px var(--green)}
+
+.mrow{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}
+.metric{background:var(--surf2);border:1px solid var(--bord);border-radius:7px;padding:8px 10px}
+.mlbl{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.mval{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--txt)}
+.mval.b{color:var(--blue)}.mval.g{color:var(--green)}.mval.o{color:var(--orange)}.mval.y{color:var(--yellow)}
+.mu{font-size:9px;font-weight:400;color:var(--muted);margin-left:1px}
+
+.crow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* sim */
+.sim-wrap{background:var(--surf);border:1px solid var(--bord);border-radius:12px;overflow:hidden}
+#sc{display:block;width:100%;background:var(--bg);touch-action:none}
+.sbar{display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--bord)}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sdot.st{background:var(--green);box-shadow:0 0 6px var(--green)}
+.sdot.sl{background:var(--orange);box-shadow:0 0 6px var(--orange);animation:blink .6s ease-in-out infinite alternate}
+@keyframes blink{from{opacity:.5}to{opacity:1}}
+.stxt{font-family:var(--mono);font-size:11px;color:var(--muted)}.stxt b{color:var(--txt)}
+.fleg{display:flex;gap:12px;margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--muted)}
+.fleg span{display:flex;align-items:center;gap:4px}
+.fd{width:10px;height:3px;border-radius:2px}
+
+/* table */
+.dtbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
+.dtbl th{color:var(--dim);font-weight:500;padding:4px 6px;text-align:right;border-bottom:1px solid var(--bord)}
+.dtbl th:first-child{text-align:left}
+.dtbl td{padding:5px 6px;text-align:right;color:var(--muted);border-bottom:1px solid rgba(42,48,80,.5)}
+.dtbl td:first-child{text-align:left;color:var(--dim)}
+.dtbl tr:hover td{background:var(--surf2);color:var(--txt)}
+
+.sbadge{display:inline-block;margin-top:8px;padding:4px 12px;border-radius:99px;
+  background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3);
+  font-family:var(--mono);font-size:11px;font-weight:700;color:var(--orange)}
+
+/* panel */
+.panel{display:flex;flex-direction:column;gap:12px}
+.swd{background:var(--bg);border:1px solid var(--bord);border-radius:8px;padding:14px;text-align:center;margin-bottom:10px}
+.swt{font-family:var(--mono);font-size:34px;font-weight:700;color:var(--blue);letter-spacing:2px;line-height:1}
+.swt.run{color:var(--orange);animation:blink .5s ease-in-out infinite alternate}
+.swn{font-size:10px;color:var(--muted);margin-top:5px;font-family:var(--mono)}
+
+button{font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 14px;
+  border-radius:6px;border:1px solid var(--bord);cursor:pointer;transition:all .15s;
+  background:var(--surf2);color:var(--muted)}
+button:hover{border-color:var(--blue);color:var(--blue)}
+.btn-rec{width:100%;background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.3);color:var(--orange)}
+.btn-rec:hover{background:rgba(249,115,22,.2);border-color:var(--orange)}
+.btn-rst{background:rgba(79,142,247,.08);border-color:rgba(79,142,247,.25);color:var(--blue)}
+.btn-rst:hover{background:rgba(79,142,247,.18)}
+
+.divider{height:1px;background:var(--bord);margin:12px -16px}
+
+.rbox{border-radius:8px;padding:10px 12px;border:1px solid var(--bord);background:var(--surf2);font-family:var(--mono);margin-top:8px}
+.rbox.g{border-color:rgba(34,211,160,.3);background:rgba(34,211,160,.06)}
+.rbox.o{border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.06)}
+.rbox.b{border-color:rgba(79,142,247,.3);background:rgba(79,142,247,.06)}
+.rt{font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.rv{font-size:15px;font-weight:700}
+.rv.g{color:var(--green)}.rv.o{color:var(--orange)}.rv.b{color:var(--blue)}
+
+/* lab-mode hidden elements */
+.check-only{transition:opacity .3s}
+body.lab-mode .check-only{opacity:0;pointer-events:none;user-select:none;
+  position:absolute;visibility:hidden;height:0;overflow:hidden;margin:0;padding:0}
+
+/* check-mode reveal box */
+.reveal-box{border-radius:8px;padding:10px 14px;border:1px dashed rgba(249,115,22,.4);
+  background:rgba(249,115,22,.05);font-family:var(--mono);font-size:11px;
+  color:var(--muted);line-height:1.7;margin-top:4px}
+.reveal-box b{color:var(--orange)}
+
+.hint{font-size:11px;color:var(--muted);line-height:1.9;font-family:var(--mono)}
+.hl{color:var(--green);font-weight:700}.hl2{color:var(--orange);font-weight:700}
+#gc{display:block;width:100%}
+
+/* answer inputs */
+.ans-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.ans-input{font-family:var(--mono);font-size:13px;font-weight:700;width:80px;
+  padding:6px 8px;background:var(--surf2);border:1px solid var(--bord);
+  border-radius:6px;color:var(--txt);outline:none;text-align:center}
+.ans-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(79,142,247,.2)}
+.ans-input.correct{border-color:var(--green);background:rgba(34,211,160,.08)}
+.ans-input.wrong{border-color:var(--red);background:rgba(239,68,68,.08)}
+.grade-btn{font-family:var(--sans);font-size:11px;font-weight:700;padding:6px 12px;
+  border-radius:6px;border:1px solid rgba(79,142,247,.3);background:rgba(79,142,247,.1);
+  color:var(--blue);cursor:pointer;transition:all .15s}
+.grade-btn:hover{background:rgba(79,142,247,.2)}
+.grade-result{font-family:var(--mono);font-size:11px;margin-top:4px;min-height:16px}
+.grade-result.ok{color:var(--green)}.grade-result.err{color:var(--red)}
+
+/* ── language ── */
+body.ar{font-family:'Tajawal',sans-serif}
+body.ar h1,body.ar button,body.ar .hint,body.ar .rt,body.ar .rv,
+body.ar .clbl,body.ar .ctitle,body.ar .stxt,body.ar .swn,
+body.ar #modeBanner,body.ar #graphHint,body.ar #rCritObs,
+body.ar #rMukFit,body.ar #nodata,body.ar #swNote{font-family:'Tajawal',sans-serif!important}
+/* language toggle button */
+#langBtn{padding:7px 14px;font-family:var(--mono);font-size:12px;font-weight:700;
+  cursor:pointer;border:1px solid var(--bord);border-radius:8px;background:transparent;
+  color:var(--muted);transition:all .2s;letter-spacing:.04em;margin-left:8px}
+#langBtn:hover{border-color:var(--blue);color:var(--blue)}
+</style>
+</head>
+<body class="lab-mode">
+<div class="app">
+<header>
+  <div style="margin-right:auto">
+    <h1 id="t-title">Inclined Plane · Friction Lab</h1>
+    <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:3px;letter-spacing:.04em" id="t-credit">Created by: Onais Madkhali</div>
+  </div>
+  <button id="langBtn" onclick="toggleLang()">العربية</button>
+  <div class="mode-toggle">
+    <button class="mode-btn active-lab" id="btnLab" onclick="setMode('lab')">🔬 <span id="t-labMode">Lab Mode</span></button>
+    <button class="mode-btn" id="btnCheck" onclick="setMode('check')">✓ <span id="t-checkMode">Check Mode</span></button>
+  </div>
+</header>
+
+<!-- mode banner -->
+<div id="modeBanner" style="font-family:var(--mono);font-size:11px;color:var(--green);
+  background:rgba(34,211,160,.07);border:1px solid rgba(34,211,160,.2);border-radius:8px;
+  padding:8px 14px;margin-bottom:14px;line-height:1.7">
+  <b style="color:var(--green)">Lab Mode</b> — μs and μk are hidden.
+  Measure θ_critical to calculate μs = tan(θ_c).
+  Drag the box to set distance d, raise θ to slide, record (d, t) pairs → graph gives μk from slope.
+  Switch to <b>Check Mode</b> to reveal and verify.
+</div>
+
+<div class="layout">
+<div class="left">
+
+  <!-- Canvas -->
+  <div class="sim-wrap">
+    <canvas id="sc" height="320"></canvas>
+    <div class="sbar">
+      <div class="sdot st" id="sdot"></div>
+      <div class="stxt" id="stxt">Static — drag box up the slope to set starting distance</div>
+      <div class="fleg">
+        <span><div class="fd" style="background:#f97316"></div>Fg·sinθ</span>
+        <span><div class="fd" style="background:#fbbf24"></div>friction</span>
+        <span><div class="fd" style="background:#ef4444"></div>net force</span>
+        <span><div class="fd" style="background:#22d3a0"></div>Normal N</span>
+        <span><div class="fd" style="background:#a78bfa"></div>Weight W</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="crow" style="align-items:start">
+    <!-- Plane settings — minimal height -->
+    <div class="card" style="padding:10px 14px">
+      <div class="ctitle" style="margin-bottom:8px" id="t-planeSettings">Plane Settings</div>
+      <div class="ctrl" style="margin-bottom:8px">
+        <div class="clbl" id="t-angleLabel">Angle θ <span class="cv" id="aOut">20.0°</span></div>
+        <input type="range" id="aSl" min="0" max="60" value="20" step="0.5">
+      </div>
+      <div class="ctrl" style="margin-bottom:8px">
+        <div class="clbl"><span id="t-massLabel">Mass m</span> <span class="cv" id="mOut">2.0 kg</span></div>
+        <input type="range" id="mSl" min="0.5" max="10" value="2" step="0.5">
+      </div>
+      <!-- Compact inline force readouts -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted)"><span id="t-fgLabel">Fg·sinθ</span>: <span style="color:var(--blue);font-weight:700" id="vFg">—</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted)"><span id="t-ffLabel">Friction</span>: <span style="color:var(--yellow);font-weight:700" id="vFf">—</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted)"><span id="t-fnLabel">Net F</span>: <span style="color:var(--orange);font-weight:700" id="vFn">—</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted)"><span id="t-acLabel">Accel</span>: <span style="color:var(--green);font-weight:700" id="vAc">—</span></div>
+      </div>
+    </div>
+
+    <!-- Recorded Data + μ sliders check-only — minimal height -->
+    <div class="card" style="padding:10px 14px">
+      <!-- μs/μk sliders: check-only -->
+      <div class="check-only">
+        <div class="ctitle" style="--blue:#22d3a0;margin-bottom:6px" id="t-musTitle">Static μs (true value)</div>
+        <div class="ctrl" style="margin-bottom:6px">
+          <div class="clbl">μs <span class="cv g" id="msOut">0.35</span></div>
+          <input type="range" class="g" id="msSl" min="0.05" max="1.00" value="0.35" step="0.01">
+        </div>
+        <div class="rbox g" id="musBox" style="margin-top:0;padding:5px 8px">
+          <div class="rt">critical angle</div>
+          <div class="rv g" style="font-size:12px" id="musVal">—</div>
+        </div>
+        <div style="height:1px;background:var(--bord);margin:8px -14px"></div>
+        <div class="ctitle" style="--blue:#f97316;margin-bottom:6px" id="t-mukTitle">Kinetic μk (true value)</div>
+        <div class="ctrl" style="margin-bottom:6px">
+          <div class="clbl">μk <span class="cv o" id="mkOut">0.25</span></div>
+          <input type="range" class="o" id="mkSl" min="0.01" max="0.90" value="0.25" step="0.01">
+        </div>
+        <div style="height:1px;background:var(--bord);margin:8px -14px 10px"></div>
+      </div>
+      <!-- New Challenge + Recorded Data header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="ctitle" style="--blue:#4f8ef7;margin-bottom:0" id="t-recData">Recorded Data</div>
+        <button onclick="randomizeCoeffs()" style="font-size:10px;padding:3px 8px;
+          background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.3);color:var(--orange)"
+          title="Randomize μs and μk for a new practice run" id="t-newChallenge">🎲 New Challenge</button>
+      </div>
+      <!-- Scrollable table wrapper — fixed height so it never pushes graph down -->
+      <div style="max-height:120px;overflow-y:auto;border-radius:4px">
+        <table class="dtbl">
+          <thead><tr><th>#</th><th>d (m)</th><th>t (s)</th><th>t² (s²)</th><th>μk est.</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div id="nodata" style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:6px;line-height:1.6" id="t-nodata">
+        Drag box → raise θ → record each run
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph — full width -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="ctitle" style="--blue:#f97316;margin-bottom:0" id="t-graphTitle">d vs t² — Student Graph</div>
+      <div style="display:flex;gap:6px">
+        <button id="btnModePlot" onclick="setGraphMode('plot')" style="font-size:10px;padding:4px 10px;background:rgba(79,142,247,.15);border-color:rgba(79,142,247,.4);color:var(--blue)">● Plot points</button>
+        <button id="btnModeLine" onclick="setGraphMode('line')" style="font-size:10px;padding:4px 10px">⟋ Draw line</button>
+        <button onclick="undoLastDot()" style="font-size:10px;padding:4px 10px" title="Undo last plotted point">↩ Undo</button>
+        <button onclick="clearGraph()" style="font-size:10px;padding:4px 10px">✕ Clear all</button>
+        <button onclick="exportGraph()" style="font-size:10px;padding:4px 10px;background:rgba(34,211,160,.1);border-color:rgba(34,211,160,.3);color:var(--green)" title="Download graph as image">⬇ Export</button>
+      </div>
+    </div>
+    <div id="graphHint" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px;min-height:28px;line-height:1.6">
+      Read (t², d) from the table → click on the grid to plot each point.
+    </div>
+    <!-- axis range sliders -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;padding:8px 10px;background:var(--surf2);border:1px solid var(--bord);border-radius:8px">
+      <div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px">
+          t² max (x-axis) <span style="color:var(--blue);font-weight:700" id="xMaxOut">12 s²</span>
+        </div>
+        <input type="range" id="xMaxSl" min="2" max="60" value="12" step="1" oninput="axisRangeChange()">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px">
+          d max (y-axis) <span style="color:var(--orange);font-weight:700" id="yMaxOut">5 m</span>
+        </div>
+        <input type="range" class="o" id="yMaxSl" min="1" max="20" value="5" step="0.5" oninput="axisRangeChange()">
+      </div>
+    </div>
+    <canvas id="gc" height="320" style="cursor:crosshair;display:block;width:100%"></canvas>
+    <div id="sbadge" style="margin-top:6px"></div>
+    <div style="margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.8">
+      d = ½ a t²&nbsp;→&nbsp;slope = a/2 &nbsp;|&nbsp; <span style="color:var(--orange)">μk = tan θ − a/(g cos θ)</span>
+    </div>
+  </div>
+
+</div><!-- /left -->
+
+<!-- RIGHT PANEL -->
+<div class="panel">
+
+  <!-- Stopwatch -->
+  <div class="card">
+    <div class="ctitle" id="t-stopwatch">Stopwatch</div>
+    <div class="swd">
+      <div class="swt" id="swDisp">0.000</div>
+      <div class="swn" id="swNote">raise θ past critical angle to slide</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-rec" style="flex:1" onclick="recordPt()" id="t-recordBtn">+ Record (d, t)</button>
+      <button class="btn-rst" onclick="doReset()" id="t-resetBtn">⟳ Reset</button>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="card">
+    <div class="ctitle" style="--blue:#22d3a0" id="t-findMusTitle">Finding μs</div>
+    <div class="hint">
+      1. <span id="t-ms1">Slowly increase θ</span><br>
+      2. <span id="t-ms2">Note angle when box just starts sliding → θ_c</span><br>
+      3. <span class="hl">μs = tan(θ_c)</span>
+    </div>
+    <div class="divider"></div>
+    <div class="ctitle" style="--blue:#f97316;margin-bottom:8px" id="t-findMukTitle">Finding μk</div>
+    <div class="hint">
+      1. <span id="t-mk1">Drag box up slope → sets d</span><br>
+      2. <span id="t-mk2">Raise θ above θ_c → slides, timer starts</span><br>
+      3. <span id="t-mk3">Press <b style="color:var(--orange)">Record</b> — read (d, t²) from table</span><br>
+      4. <span id="t-mk4">Repeat for ≥3 different d values</span><br>
+      5. <span id="t-mk5">Switch graph to <b style="color:#f97316">● Plot points</b></span><br>
+      &nbsp;&nbsp;<span id="t-mk6">→ click to place each (t², d) dot</span><br>
+      6. <span id="t-mk7">Switch to <b style="color:#22d3a0">⟋ Draw line</b></span><br>
+      &nbsp;&nbsp;<span id="t-mk8">→ click 2 anchors for best-fit line</span><br>
+      &nbsp;&nbsp;<span class="hl2">a = 2 × your slope</span><br>
+      &nbsp;&nbsp;<span class="hl2">μk = tan θ − a/(g cos θ)</span>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="ctitle" id="t-yourMeasure">Your Measurements</div>
+
+    <!-- μs answer -->
+    <div class="rbox g" style="margin-top:0">
+      <div class="rt" id="t-critObs">critical angle θ_c (you observe)</div>
+      <div class="rv g" id="rCritObs">increase θ until box slides</div>
+    </div>
+    <div class="rbox g" style="margin-top:8px">
+      <div class="rt" id="t-musAns">your μs = tan(θ_c) — type your answer</div>
+      <div class="ans-row">
+        <input class="ans-input" id="ansMusInput" type="number" step="0.001" placeholder="0.000">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--dim)" id="t-gradedIn">graded in Check Mode</span>
+      </div>
+      <div class="grade-result" id="gradeMusResult"></div>
+    </div>
+
+    <!-- μk answer -->
+    <div class="rbox o" style="margin-top:8px">
+      <div class="rt" id="t-mukAns">μk from graph slope — type your answer</div>
+      <div class="rv o" id="rMukFit" style="font-size:11px;margin-bottom:4px">draw line on graph →</div>
+      <div class="ans-row">
+        <input class="ans-input" id="ansMukInput" type="number" step="0.001" placeholder="0.000">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--dim)" id="t-gradedIn2">graded in Check Mode</span>
+      </div>
+      <div class="grade-result" id="gradeMukResult"></div>
+    </div>
+
+    <!-- Check mode reveals true values + material -->
+    <div class="check-only">
+      <div class="divider"></div>
+      <div class="reveal-box">
+        <b id="t-trueVals">True values (Check Mode)</b><br>
+        μs (set) = <b id="trueMusDisp">0.350</b><br>
+        θ_c (set) = <b id="trueCritDisp">—</b><br>
+        μk (set) = <b id="trueMukDisp">0.250</b>
+      </div>
+      <div class="reveal-box" id="materialBox" style="margin-top:8px;
+        border-color:rgba(34,211,160,.3);background:rgba(34,211,160,.06)">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px" id="t-closestMat">Closest real-world surface pair</div>
+        <div style="font-size:15px;font-weight:700;color:var(--green)" id="materialName">—</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px" id="materialRange">—</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /panel -->
+</div><!-- /layout -->
+</div><!-- /app -->
+
+<script>
+const G = 9.81;
+const MAX_M = 5.0;   // plane pixel length maps to MAX_M real metres
+
+let angle = 20, mass = 2, mus = 0.35, muk = 0.25;
+let boxT = 0.45;      // 0=top of slope, 1=foot
+let dragging = false;
+
+// Sliding state
+let simRunning   = false;
+let simStartT    = 0;     // boxT at moment sliding began
+let simStartMs   = 0;     // wall-clock ms when sliding began
+let swElapsed    = 0;     // last recorded stopwatch value (seconds)
+let animRafId    = null;
+
+let dataPoints = [];
+let labMode = true;
+
+const sc   = document.getElementById('sc');
+const ctx  = sc.getContext('2d');
+const gc   = document.getElementById('gc');
+const gctx = gc.getContext('2d');
+
+/* ── resize ── */
+function resize(){
+  const dpr = window.devicePixelRatio || 1;
+
+  // sim canvas — apply dpr
+  const simCssW = sc.parentElement.clientWidth;
+  const simCssH = 320;
+  sc.style.width  = simCssW + 'px';
+  sc.style.height = simCssH + 'px';
+  sc.width  = simCssW * dpr;
+  sc.height = simCssH * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // graph canvas — high-DPI
+  const gcCssW = gc.parentElement.clientWidth - 32;
+  const gcCssH = 320;
+  gc.style.width  = gcCssW + 'px';
+  gc.style.height = gcCssH + 'px';
+  gc.width  = gcCssW * dpr;
+  gc.height = gcCssH * dpr;
+  gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  render(); drawGraph();
+}
+window.addEventListener('resize', resize);
+
+/* ── mode toggle ── */
+function setMode(m){
+  labMode = m === 'lab';
+  document.body.className = labMode ? 'lab-mode' : '';
+  document.getElementById('btnLab').className   = 'mode-btn' + (labMode ? ' active-lab' : '');
+  document.getElementById('btnCheck').className = 'mode-btn' + (!labMode ? ' active-check' : '');
+  const banner = document.getElementById('modeBanner');
+  if(labMode){
+    banner.style.borderColor='rgba(34,211,160,.2)';
+    banner.style.background='rgba(34,211,160,.07)';
+    banner.innerHTML='<b style="color:var(--green)">Lab Mode</b> — μs and μk are hidden. Measure θ_c to get μs = tan(θ_c). Drag box, raise θ, record (d,t) pairs → graph slope gives μk. Switch to <b>Check Mode</b> to verify.';
+  } else {
+    banner.style.borderColor='rgba(249,115,22,.25)';
+    banner.style.background='rgba(249,115,22,.06)';
+    banner.innerHTML='<b style="color:var(--orange)">Check Mode</b> — True μs and μk sliders are now visible. Compare your measured values with the set values to see how accurate your experiment was.';
+  }
+  renderTable();
+  if(studentLine) computeStudentSlope();
+  drawGraph();
+  update();
+  setGraphMode(graphMode);
+  // auto-grade when entering Check Mode, clear feedback when returning to Lab Mode
+  if(!labMode){
+    gradeAns('mus');
+    gradeAns('muk');
+    guessMaterial();
+  } else {
+    document.getElementById('gradeMusResult').textContent='';
+    document.getElementById('gradeMukResult').textContent='';
+    document.getElementById('ansMusInput').className='ans-input';
+    document.getElementById('ansMukInput').className='ans-input';
+  }
+}
+
+/* ── inputs ── */
+document.getElementById('aSl').oninput  = e => { angle = +e.target.value; document.getElementById('aOut').textContent = (+angle).toFixed(1)+'°'; onAngleOrMuChange(); };
+document.getElementById('mSl').oninput  = e => { mass  = +e.target.value; document.getElementById('mOut').textContent = mass.toFixed(1)+' kg'; update(); };
+document.getElementById('msSl').oninput = e => { mus = +e.target.value; document.getElementById('msOut').textContent = mus.toFixed(2); onAngleOrMuChange(); };
+document.getElementById('mkSl').oninput = e => { muk = +e.target.value; document.getElementById('mkOut').textContent = muk.toFixed(2); update(); };
+
+/* ── RANDOMIZE friction coefficients ──
+   Constraints:
+   - μs in [0.15, 0.85]  → θ_c = arctan(μs) in [8.5°, 40.4°] — always reachable within 60° max
+   - μk in [0.08, μs-0.05] — always less than μs
+── */
+function randomizeCoeffs(){
+  const newMus = +(0.15 + Math.random()*0.70).toFixed(2);       // 0.15–0.85
+  const newMuk = +(0.08 + Math.random()*(newMus-0.13)).toFixed(2); // 0.08..(μs-0.05)
+  mus = newMus; muk = newMuk;
+  document.getElementById('msSl').value = mus;
+  document.getElementById('msOut').textContent = mus.toFixed(2);
+  document.getElementById('mkSl').value = muk;
+  document.getElementById('mkOut').textContent = muk.toFixed(2);
+  document.getElementById('rMusSet') && (document.getElementById('rMusSet').textContent = mus.toFixed(3));
+  document.getElementById('trueMusDisp').textContent = mus.toFixed(3);
+  document.getElementById('trueMukDisp').textContent = muk.toFixed(3);
+  // reset everything for fresh practice
+  dataPoints=[]; studentDots=[]; studentLine=null; linePhase=0; pendingP1=null;
+  swElapsed=0; boxT=0.45;
+  stopSliding(false);
+  document.getElementById('swDisp').textContent='0.000';
+  document.getElementById('swNote').textContent='raise θ past critical angle to slide';
+  document.getElementById('ansMusInput').value='';
+  document.getElementById('ansMukInput').value='';
+  document.getElementById('ansMusInput').className='ans-input';
+  document.getElementById('ansMukInput').className='ans-input';
+  document.getElementById('gradeMusResult').textContent='';
+  document.getElementById('gradeMukResult').textContent='';
+  document.getElementById('sbadge').innerHTML='';
+  document.getElementById('rMukFit').textContent='draw line on graph →';
+  renderTable(); drawGraph(); onAngleOrMuChange();
+}
+
+/* ── physics ── */
+function physics(){
+  const th    = angle * Math.PI / 180;
+  const Fn    = mass * G * Math.cos(th);
+  const Fgs   = mass * G * Math.sin(th);
+  const Fsmax = mus * Fn;
+  const Fkmax = muk * Fn;  // kinetic friction force
+
+  // Sliding condition depends on current state (hysteresis):
+  // - If at rest:    starts sliding only if Fg·sinθ > μs·N
+  // - If in motion:  keeps sliding as long as Fg·sinθ > μk·N
+  const wouldStartSliding = Fgs > Fsmax;
+  const wouldKeepSliding  = Fgs > Fkmax;
+  const sliding = simRunning ? wouldKeepSliding : wouldStartSliding;
+
+  let Ff, Fnet, a;
+  if(!sliding){ Ff=Fgs; Fnet=0; a=0; }
+  else        { Ff=Fkmax; Fnet=Math.max(0,Fgs-Ff); a=Fnet/mass; }
+
+  const critDeg     = Math.atan(mus)*180/Math.PI;  // angle to start sliding
+  const stopDeg     = Math.atan(muk)*180/Math.PI;  // angle where sliding stops
+  const dist        = (1-boxT)*MAX_M;
+  const tExp        = (sliding && a>1e-4) ? Math.sqrt(2*dist/a) : null;
+  return {th,Fn,Fgs,Ff,Fnet,a,sliding,critDeg,stopDeg,dist,tExp};
+}
+
+/* ── angle/μ changed: check if we need to start/stop sliding ── */
+function onAngleOrMuChange(){
+  const p = physics();
+  if(p.sliding && !simRunning && !dragging){
+    startSliding(p);
+  } else if(p.sliding && simRunning){
+    // angle changed while sliding — rebase from current position with new acceleration
+    // so box doesn't jump back to original start
+    simStartT  = boxT;
+    simStartMs = performance.now();
+    swElapsed  = 0;
+    document.getElementById('swDisp').textContent = '0.000';
+  } else if(!p.sliding && simRunning){
+    stopSliding(false);
+  }
+  update();
+}
+
+/* ── update UI (metrics, panel labels) ── */
+function update(){
+  const p = physics();
+
+  document.getElementById('vFg').textContent = p.Fgs.toFixed(2)+' N';
+  document.getElementById('vFf').textContent = p.Ff.toFixed(2)+' N';
+  document.getElementById('vFn').textContent = p.Fnet.toFixed(2)+' N';
+  document.getElementById('vAc').textContent = p.a.toFixed(3)+' m/s²';
+
+  // status dot + text
+  const dot = document.getElementById('sdot');
+  const txt = document.getElementById('stxt');
+  if(simRunning){
+    dot.className='sdot st';
+    txt.innerHTML = labMode
+      ? `<b>SLIDING</b> — lower θ to stop the box`
+      : `<b>SLIDING</b> — stops below θ=${p.stopDeg.toFixed(1)}° (= arctan μk)`;
+  } else if(dragging){
+    dot.className='sdot st';
+    txt.innerHTML=`<b>DRAG</b> — d from foot = ${p.dist.toFixed(2)} m`;
+  } else {
+    dot.className='sdot st';
+    txt.innerHTML = labMode
+      ? `<b>STATIC</b> — increase θ until box slides`
+      : `<b>STATIC</b> — slides above θ=${p.critDeg.toFixed(1)}° | stops below θ=${p.stopDeg.toFixed(1)}°`;
+  }
+
+  // check-mode true value display
+  const critDeg = p.critDeg.toFixed(1);
+  document.getElementById('trueMusDisp').textContent = mus.toFixed(3);
+  document.getElementById('trueCritDisp').textContent = critDeg+'°';
+  document.getElementById('trueMukDisp').textContent = muk.toFixed(3);
+
+  // check-mode μs box
+  const musBox = document.getElementById('musBox');
+  musBox.className = p.sliding ? 'rbox o' : 'rbox g';
+  document.getElementById('musVal').className = p.sliding ? 'rv o' : 'rv g';
+  document.getElementById('musVal').textContent = `θ_c = ${critDeg}° → μs = ${mus.toFixed(3)}`;
+
+  // student results panel — just update critical angle observation
+  if(p.sliding || simRunning){
+    document.getElementById('rCritObs').textContent = angle+'° (currently sliding)';
+  } else {
+    const aboveCrit = angle >= p.critDeg;
+    if(aboveCrit){
+      document.getElementById('rCritObs').textContent = '≈ '+angle+'° (at boundary)';
+    } else {
+      document.getElementById('rCritObs').textContent = 'increase θ until box slides';
+    }
+  }
+
+  render(p);
+}
+
+/* ── SLIDING SIMULATION ──
+   On each animation frame:
+     elapsed = (now - simStartMs) / 1000
+     d_m = ½ a elapsed²   (metres travelled)
+     boxT = simStartT + d_m / MAX_M
+
+   Recording: just saves (d_travelled, elapsed) WITHOUT stopping animation.
+   Stopping: happens when box reaches foot OR angle drops below critical.
+── */
+function startSliding(p){
+  if(simRunning) return;
+  simRunning  = true;
+  simStartT   = boxT;
+  simStartMs  = performance.now();
+  swElapsed   = 0;
+  document.getElementById('swDisp').className='swt run';
+  document.getElementById('swNote').textContent='sliding… — press Record anytime';
+  animRafId = requestAnimationFrame(animFrame);
+}
+
+function animFrame(now){
+  if(!simRunning) return;
+  const p = physics();
+
+  // stop if angle dropped below critical
+  if(!p.sliding){ stopSliding(false); update(); return; }
+
+  const elapsed = (now - simStartMs) / 1000;
+  swElapsed = elapsed;
+  document.getElementById('swDisp').textContent = elapsed.toFixed(3);
+
+  const d_m = 0.5 * p.a * elapsed * elapsed;
+  boxT = Math.min(0.97, simStartT + d_m / MAX_M);
+  render(p);
+
+  if(boxT >= 0.97){
+    // reached foot
+    stopSliding(true);
+    update();
+    return;
+  }
+  animRafId = requestAnimationFrame(animFrame);
+}
+
+function stopSliding(reachedFoot){
+  if(!simRunning) return;
+  simRunning = false;
+  cancelAnimationFrame(animRafId);
+  document.getElementById('swDisp').className='swt';
+  document.getElementById('swNote').textContent = reachedFoot
+    ? 'box reached foot — drag box up & raise θ again'
+    : 'angle lowered — raise θ again to slide';
+}
+
+/* ── RECORD ── does NOT stop the animation ── */
+function recordPt(){
+  if(swElapsed < 0.05){
+    alert('No slide time yet. Raise θ above the critical angle first.'); return;
+  }
+  const t = swElapsed;
+  const t2 = t * t;
+  const d  = (boxT - simStartT) * MAX_M;   // metres actually travelled so far
+  if(d < 0.05){ alert('Box has barely moved. Wait a moment or increase θ.'); return; }
+  const a_m  = 2*d/t2;
+  const thr  = angle*Math.PI/180;
+  const mk_e = Math.max(0, Math.tan(thr) - a_m/(G*Math.cos(thr)));
+  dataPoints.push({d, t, t2, mk_e, angle});
+
+  // reset stopwatch reference to NOW so next record is a fresh segment
+  // (student can record multiple times in one slide)
+  simStartT  = boxT;
+  simStartMs = performance.now();
+  swElapsed  = 0;
+  document.getElementById('swDisp').textContent='0.000';
+  document.getElementById('swNote').textContent='recorded ✓ — keep sliding or drag again';
+
+  renderTable();
+  drawGraph();
+  // do NOT stop animation — box keeps going
+}
+
+/* ── RESET ── stops animation, returns box to start position ── */
+function doReset(){
+  stopSliding(false);
+  swElapsed = 0;
+  boxT = simStartT > 0 ? simStartT : boxT;  // keep box where it was dragged
+  document.getElementById('swDisp').textContent='0.000';
+  document.getElementById('swDisp').className='swt';
+  document.getElementById('swNote').textContent='raise θ past critical angle to slide';
+  update();
+}
+
+/* ── DRAG ── project pointer onto slope axis ── */
+function planeGeom(){
+  // Use CSS dimensions (sc.style.width/height) since canvas is scaled by dpr
+  const W = parseFloat(sc.style.width)  || sc.width;
+  const H = parseFloat(sc.style.height) || sc.height;
+  const PL=60,PR=40,PT=40,PB=55;
+  const L=W-PL-PR;
+  const ox=PL, oy=H-PB;
+  const th=angle*Math.PI/180;
+  const tx=ox+L*Math.cos(th), ty=oy-L*Math.sin(th);
+  return{ox,oy,tx,ty,L,th};
+}
+
+function ptrToBoxT(cx,cy){
+  const r=sc.getBoundingClientRect();
+  const mx=cx-r.left, my=cy-r.top;
+  const{ox,oy,tx,ty,L}=planeGeom();
+  const dx=ox-tx, dy=oy-ty;
+  const qx=mx-tx, qy=my-ty;
+  const t=(qx*dx+qy*dy)/(dx*dx+dy*dy);
+  return Math.max(0.04, Math.min(0.93, t));
+}
+
+function nearBox(cx,cy){
+  const r=sc.getBoundingClientRect();
+  const mx=cx-r.left, my=cy-r.top;
+  const{ox,oy,tx,ty}=planeGeom();
+  const bx=tx+boxT*(ox-tx), by=ty+boxT*(oy-ty);
+  return Math.hypot(mx-bx, my-by)<30;
+}
+
+function releaseDrag(){
+  if(!dragging) return;
+  dragging   = false;
+  simStartT  = boxT;          // record where student placed the box
+  sc.style.cursor = '';
+  // If angle is already above critical, resume sliding immediately from new position
+  const p = physics();
+  if(p.sliding && !simRunning){
+    startSliding(p);
+  } else {
+    update();
+  }
+}
+
+sc.addEventListener('mousedown',  e=>{ if(nearBox(e.clientX,e.clientY)){ if(simRunning) stopSliding(false); dragging=true; sc.style.cursor='grabbing'; update(); }});
+sc.addEventListener('mousemove',  e=>{ 
+  if(dragging){ boxT=ptrToBoxT(e.clientX,e.clientY); update(); return; }
+  if(!simRunning) sc.style.cursor=nearBox(e.clientX,e.clientY)?'grab':'default';
+});
+sc.addEventListener('mouseup',    ()=>releaseDrag());
+sc.addEventListener('mouseleave', ()=>releaseDrag());
+sc.addEventListener('touchstart', e=>{ if(e.touches.length===1&&nearBox(e.touches[0].clientX,e.touches[0].clientY)){ if(simRunning) stopSliding(false); dragging=true; e.preventDefault();}},{passive:false});
+sc.addEventListener('touchmove',  e=>{ if(!dragging)return; e.preventDefault(); boxT=ptrToBoxT(e.touches[0].clientX,e.touches[0].clientY); update();},{passive:false});
+sc.addEventListener('touchend',   ()=>releaseDrag());
+
+/* ── RENDER ── */
+function render(p){
+  if(!p) p=physics();
+  // clearRect needs physical pixels; all drawing uses CSS coords (dpr handled by setTransform)
+  ctx.clearRect(0,0,sc.width,sc.height);
+  const{ox,oy,tx,ty,L,th}=planeGeom();
+  const W=parseFloat(sc.style.width)||sc.width;
+  const H=parseFloat(sc.style.height)||sc.height;
+
+  // unit vectors
+  const DSX=-Math.cos(th), DSY=Math.sin(th);   // down-slope
+  const USX= Math.cos(th), USY=-Math.sin(th);  // up-slope
+  const NX =-Math.sin(th), NY =-Math.cos(th);  // normal away from surface
+
+  /* plane fill */
+  ctx.beginPath();
+  ctx.moveTo(ox,oy);ctx.lineTo(tx,ty);ctx.lineTo(tx,oy);ctx.closePath();
+  ctx.fillStyle='#181f35';ctx.fill();
+
+  // hatch
+  ctx.save();
+  ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(tx,ty);ctx.lineTo(tx,oy);ctx.closePath();ctx.clip();
+  ctx.strokeStyle='rgba(79,142,247,.05)';ctx.lineWidth=1;
+  for(let i=-H;i<W+H;i+=16){ctx.beginPath();ctx.moveTo(ox+i,oy);ctx.lineTo(ox+i+H,oy-H);ctx.stroke();}
+  ctx.restore();
+
+  // edges
+  ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(tx,ty);
+  ctx.strokeStyle='#3a4a7a';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ox-14,oy);ctx.lineTo(tx+14,oy);
+  ctx.strokeStyle='#2a3050';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx,oy);
+  ctx.strokeStyle='#2a3050';ctx.lineWidth=1.5;ctx.stroke();
+
+  // angle arc
+  ctx.beginPath();ctx.arc(ox,oy,40,-th,0,false);
+  ctx.strokeStyle='#22d3a0';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#22d3a0';ctx.font='bold 12px JetBrains Mono,monospace';ctx.textAlign='left';
+  ctx.fillText('θ='+angle+'°',ox+46,oy-10);
+
+  /* box */
+  const bs=32;
+  const bx=tx+boxT*(ox-tx);
+  const by=ty+boxT*(oy-ty);
+
+  ctx.save();
+  ctx.translate(bx,by);ctx.rotate(-th);
+  ctx.shadowColor=dragging?'rgba(79,142,247,.9)':'rgba(79,142,247,.4)';
+  ctx.shadowBlur=dragging?22:14;
+  ctx.fillStyle='#4f8ef7';
+  ctx.fillRect(-bs/2,-bs,bs,bs);
+  ctx.shadowBlur=0;
+  ctx.strokeStyle=dragging?'#a0c4ff':'#7ab3fa';
+  ctx.lineWidth=dragging?2.5:1.5;
+  ctx.strokeRect(-bs/2,-bs,bs,bs);
+  ctx.restore();
+
+  /* drag hint */
+  if(!simRunning && !dragging){
+    ctx.save();
+    ctx.globalAlpha=0.35;
+    ctx.fillStyle='#4f8ef7';
+    ctx.font='14px JetBrains Mono,monospace';ctx.textAlign='center';
+    const hx=bx+NX*(bs+10), hy=by+NY*(bs+10);
+    ctx.fillText('↕',hx,hy);
+    ctx.globalAlpha=1;
+    ctx.restore();
+  }
+
+  /* force arrows — fixed scale: 4 px/N, capped at 90px so they never crowd at steep angles */
+  const bcx=bx+(bs/2)*NX, bcy=by+(bs/2)*NY;
+  const SC = 4.0;
+  const MAX_ARROW = 90; // px cap
+
+  function arrow(ax,ay,ux,uy,mag,color,label,lw,noHead){
+    if(mag<0.05)return;
+    const len=Math.min(mag*SC, MAX_ARROW);
+    if(len<6) return;
+    const ex=ax+ux*len, ey=ay+uy*len;
+    const ang=Math.atan2(uy,ux), hs=7;
+    ctx.save();
+    ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=lw||2;
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ex,ey);ctx.stroke();
+    if(!noHead){
+      ctx.beginPath();
+      ctx.moveTo(ex,ey);
+      ctx.lineTo(ex-hs*Math.cos(ang-.38),ey-hs*Math.sin(ang-.38));
+      ctx.lineTo(ex-hs*Math.cos(ang+.38),ey-hs*Math.sin(ang+.38));
+      ctx.closePath();ctx.fill();
+    }
+    ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='center';
+    ctx.fillText(label,ex-uy*13,ey+ux*13);
+    ctx.restore();
+  }
+
+  // single clean dot at arrow origin
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.beginPath(); ctx.arc(bcx,bcy,3,0,Math.PI*2); ctx.fill();
+
+  // Along-slope forces — from box center
+  arrow(bcx,bcy,DSX,DSY,p.Fgs,'#f97316','Fg sinθ');
+  if(p.Ff>0.05)   arrow(bcx,bcy,USX,USY,p.Ff,'#fbbf24',p.sliding?'fk':'fs');
+  if(p.Fnet>0.05) arrow(bcx,bcy,DSX,DSY,p.Fnet,'#ef4444','Fnet');
+
+  // Normal force — perpendicular away from surface
+  arrow(bcx,bcy,NX,NY,p.Fn,'#22d3a0','N');
+
+  // Weight decomposition — all from box center, forming a right triangle
+  // W goes straight down, Fg·cosθ goes into the slope, closing line connects their tips
+  const Fw  = mass*G;
+  const Wlen  = Math.min(Fw*SC,   MAX_ARROW);
+  const FcLen = Math.min(p.Fn*SC, MAX_ARROW);
+
+  // tip of W (straight down)
+  const Wtx = bcx,             Wty = bcy + Wlen;
+  // tip of Fg·cosθ (into slope = opposite of normal)
+  const Ctx = bcx + (-NX)*FcLen, Cty = bcy + (-NY)*FcLen;
+
+  // W — straight down
+  arrow(bcx,bcy,0,1,Fw,'#a78bfa','W',1.5,false);
+
+  // Fg·cosθ — dashed, from box center, pointing into slope
+  ctx.save();
+  ctx.strokeStyle='rgba(167,139,250,0.55)'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(bcx,bcy); ctx.lineTo(Ctx,Cty); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+  ctx.fillStyle='rgba(167,139,250,0.7)'; ctx.font='10px JetBrains Mono,monospace'; ctx.textAlign='center';
+  ctx.fillText('Fg cosθ', Ctx - NY*14, Cty + NX*14);
+
+  // closing dashed line: from tip of Fg·cosθ to tip of W (right angle at box center)
+  ctx.save();
+  ctx.strokeStyle='rgba(167,139,250,0.2)'; ctx.lineWidth=1; ctx.setLineDash([2,4]);
+  ctx.beginPath(); ctx.moveTo(Ctx,Cty); ctx.lineTo(Wtx,Wty); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+
+  /* distance annotation: from foot to box base */
+  if(p.dist>0.05){
+    ctx.save();
+    ctx.strokeStyle='rgba(79,142,247,.45)';ctx.lineWidth=1.2;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(bx,by);ctx.stroke();
+    ctx.setLineDash([]);
+    // end ticks
+    ctx.strokeStyle='rgba(79,142,247,.65)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(ox+NX*7,oy+NY*7);ctx.lineTo(ox-NX*7,oy-NY*7);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx+NX*7,by+NY*7);ctx.lineTo(bx-NX*7,by-NY*7);ctx.stroke();
+    // label
+    const mx=(ox+bx)/2+NX*22, my=(oy+by)/2+NY*22;
+    ctx.fillStyle='#4f8ef7';ctx.font='bold 11px JetBrains Mono,monospace';ctx.textAlign='center';
+    ctx.fillText('d = '+p.dist.toFixed(2)+' m',mx,my);
+    ctx.restore();
+  }
+
+  // foot label
+  ctx.fillStyle='#3d4a6b';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='center';
+  ctx.fillText('foot',ox,oy+18);
+}
+
+/* ── TABLE ── μk est. hidden in lab mode ── */
+function renderTable(){
+  if(!dataPoints.length){
+    document.getElementById('nodata').style.display='block';
+    document.getElementById('tbody').innerHTML='';
+    return;
+  }
+  document.getElementById('nodata').style.display='none';
+  document.getElementById('tbody').innerHTML = dataPoints.map((r,i)=>`<tr>
+    <td>${i+1}</td>
+    <td>${r.d.toFixed(2)}</td>
+    <td>${r.t.toFixed(3)}</td>
+    <td>${r.t2.toFixed(3)}</td>
+    <td style="color:var(--orange);filter:${labMode?'blur(5px)':'none'};user-select:${labMode?'none':'auto'}">${r.mk_e.toFixed(3)}</td>
+  </tr>`).join('');
+}
+
+/* ══════════════════════════════════════════════
+   STUDENT GRAPH — two modes:
+   
+   'plot' mode: each click places a student dot (orange ×)
+   'line' mode: click 1 = line anchor, click 2 = line drawn, slope computed
+   
+   Check Mode overlays:
+     - true data dots (blue) at exact (t², d) positions
+     - true regression line (dashed)
+══════════════════════════════════════════════ */
+
+let graphMode   = 'plot';  // 'plot' | 'line'
+let studentDots = [];      // [{gx,gy}] — student-placed points in data space
+let studentLine = null;    // {p1:{gx,gy}, p2:{gx,gy}} | null
+let linePhase   = 0;       // 0=need p1, 1=need p2, 2=done
+let pendingP1   = null;
+
+const GP = {l:52, r:16, t:16, b:38};
+
+function setGraphMode(m){
+  graphMode = m;
+  const btnPlot = document.getElementById('btnModePlot');
+  const btnLine = document.getElementById('btnModeLine');
+  btnPlot.style.background = m==='plot' ? 'rgba(79,142,247,.15)' : 'transparent';
+  btnPlot.style.borderColor= m==='plot' ? 'rgba(79,142,247,.4)'  : 'var(--bord)';
+  btnPlot.style.color      = m==='plot' ? 'var(--blue)' : 'var(--muted)';
+  btnLine.style.background = m==='line' ? 'rgba(34,211,160,.15)' : 'transparent';
+  btnLine.style.borderColor= m==='line' ? 'rgba(34,211,160,.4)'  : 'var(--bord)';
+  btnLine.style.color      = m==='line' ? 'var(--green)' : 'var(--muted)';
+  gc.style.cursor = 'crosshair';
+  if(m==='plot'){
+    document.getElementById('graphHint').innerHTML =
+      'Read (t², d) from the table → click on the grid to plot each data point.';
+  } else {
+    if(linePhase===2){
+      document.getElementById('graphHint').innerHTML =
+        'Line drawn. Click <b style="color:#ef4444">✕ Clear all</b> to redraw.';
+    } else {
+      document.getElementById('graphHint').innerHTML =
+        'Click <b style="color:#22d3a0">anchor 1</b> then <b style="color:#22d3a0">anchor 2</b> to draw your best-fit line.';
+    }
+  }
+  drawGraph();
+}
+
+function clearGraph(){
+  studentDots=[]; studentLine=null; linePhase=0; pendingP1=null;
+  draggingAnchor=null; anchorDragEndTime=0;
+  document.getElementById('sbadge').innerHTML='';
+  document.getElementById('rMukFit').textContent='plot points → draw line →';
+  setGraphMode('plot');
+}
+
+function axisRangeChange(){
+  const xv = +document.getElementById('xMaxSl').value;
+  const yv = +document.getElementById('yMaxSl').value;
+  document.getElementById('xMaxOut').textContent = xv + ' s²';
+  document.getElementById('yMaxOut').textContent = yv + ' m';
+  drawGraph();
+}
+
+function graphDataRange(){
+  const DIVS = 20;
+  const xmax = +document.getElementById('xMaxSl').value;
+  const ymax = +document.getElementById('yMaxSl').value;
+  const xStep = xmax / DIVS;
+  const yStep = ymax / DIVS;
+  return { xmin:0, xmax, ymin:0, ymax, xStep, yStep };
+}
+
+function gcCssSize(){
+  return { W: parseFloat(gc.style.width)||gc.width, H: parseFloat(gc.style.height)||gc.height };
+}
+
+function canvasToData(cx,cy){
+  const {W,H}=gcCssSize(), pw=W-GP.l-GP.r, ph=H-GP.t-GP.b;
+  const {xmin,xmax,ymin,ymax}=graphDataRange();
+  return {
+    gx: xmin+((cx-GP.l)/pw)*(xmax-xmin),
+    gy: ymin+((GP.t+ph-cy)/ph)*(ymax-ymin)
+  };
+}
+
+function dataToCanvas(gx,gy){
+  const {W,H}=gcCssSize(), pw=W-GP.l-GP.r, ph=H-GP.t-GP.b;
+  const {xmin,xmax,ymin,ymax}=graphDataRange();
+  return {
+    cx: GP.l+((gx-xmin)/(xmax-xmin))*pw,
+    cy: GP.t+ph-((gy-ymin)/(ymax-ymin))*ph
+  };
+}
+
+/* ── MATERIAL GUESS based on μs and μk ──
+   Sources: Engineering Toolbox, Shigley's Mechanical Engineering Design
+── */
+const MATERIALS = [
+  {name:'Ice on Ice',          musMin:0.05, musMax:0.15, mukMin:0.02, mukMax:0.09},
+  {name:'PTFE (Teflon) on Steel', musMin:0.04, musMax:0.12, mukMin:0.04, mukMax:0.10},
+  {name:'Steel on Ice',        musMin:0.03, musMax:0.10, mukMin:0.01, mukMax:0.06},
+  {name:'Wet Glass on Glass',  musMin:0.10, musMax:0.20, mukMin:0.09, mukMax:0.15},
+  {name:'Rubber on Wet Road',  musMin:0.25, musMax:0.50, mukMin:0.20, mukMax:0.40},
+  {name:'Wood on Wood',        musMin:0.25, musMax:0.50, mukMin:0.20, mukMax:0.40},
+  {name:'Steel on Steel (dry)',musMin:0.42, musMax:0.78, mukMin:0.31, mukMax:0.57},
+  {name:'Aluminium on Steel',  musMin:0.45, musMax:0.65, mukMin:0.30, mukMax:0.50},
+  {name:'Copper on Steel',     musMin:0.36, musMax:0.65, mukMin:0.18, mukMax:0.36},
+  {name:'Glass on Glass (dry)',musMin:0.68, musMax:1.00, mukMin:0.40, mukMax:0.60},
+  {name:'Rubber on Dry Road',  musMin:0.60, musMax:0.90, mukMin:0.50, mukMax:0.80},
+  {name:'Concrete on Concrete',musMin:0.60, musMax:0.85, mukMin:0.40, mukMax:0.75},
+  {name:'Leather on Metal',    musMin:0.30, musMax:0.60, mukMin:0.16, mukMax:0.40},
+  {name:'Wood on Concrete',    musMin:0.50, musMax:0.70, mukMin:0.30, mukMax:0.50},
+  {name:'Cast Iron on Cast Iron',musMin:0.30,musMax:0.50,mukMin:0.16,mukMax:0.25},
+];
+
+function guessMaterial(){
+  // find best match: smallest combined distance in μs-μk space
+  let best=null, bestScore=Infinity;
+  MATERIALS.forEach(m=>{
+    // score = how far μs and μk are from the material's range midpoints
+    const musMid=(m.musMin+m.musMax)/2, mukMid=(m.mukMin+m.mukMax)/2;
+    const score=Math.abs(mus-musMid)/((m.musMax-m.musMin)/2+0.01)
+               +Math.abs(muk-mukMid)/((m.mukMax-m.mukMin)/2+0.01);
+    if(score<bestScore){bestScore=score;best=m;}
+  });
+  if(best){
+    document.getElementById('materialName').textContent=best.name;
+    document.getElementById('materialRange').textContent=
+      `μs ≈ ${best.musMin}–${best.musMax}  |  μk ≈ ${best.mukMin}–${best.mukMax}`;
+  }
+}
+
+/* ── EXPORT graph as PNG ── */
+function exportGraph(){
+  const dpr=window.devicePixelRatio||1;
+  const {W,H}=gcCssSize();
+  const tableRows=dataPoints.length;
+  const tableH=tableRows?tableRows*20+36:0;
+  const totalH=H+tableH+28;
+  const exp=document.createElement('canvas');
+  exp.width=W*dpr; exp.height=totalH*dpr;
+  const ec=exp.getContext('2d');
+  ec.setTransform(dpr,0,0,dpr,0,0);
+  ec.fillStyle='#0f1117'; ec.fillRect(0,0,W,totalH);
+  // copy graph canvas
+  ec.drawImage(gc,0,0,gc.width,gc.height,0,0,W,H);
+  // footer bar
+  ec.fillStyle='#171b26'; ec.fillRect(0,H,W,28);
+  ec.fillStyle='#6b7a99'; ec.font='10px JetBrains Mono,monospace'; ec.textAlign='left';
+  ec.fillText(`θ=${(+angle).toFixed(1)}°  m=${mass}kg  |  Friction Lab — Designed by: Onais Madkhali`,10,H+18);
+  if(studentLine){
+    const {p1,p2}=studentLine;
+    const slope=(p2.gy-p1.gy)/(p2.gx-p1.gx);
+    const afit=2*slope,thr=angle*Math.PI/180;
+    const mkfit=Math.max(0,Math.tan(thr)-afit/(G*Math.cos(thr)));
+    ec.fillStyle='#22d3a0'; ec.textAlign='right';
+    ec.fillText(`slope=${slope.toFixed(4)}  a=${afit.toFixed(3)} m/s²  μk≈${mkfit.toFixed(3)}`,W-10,H+18);
+  }
+  // data table
+  if(tableRows){
+    const cols=['#','d (m)','t (s)','t² (s²)','μk est.'],colX=[8,50,115,185,270];
+    ec.fillStyle='#1e2333'; ec.fillRect(0,H+28,W,tableH);
+    ec.fillStyle='#556080'; ec.font='bold 9px JetBrains Mono,monospace'; ec.textAlign='left';
+    cols.forEach((c,i)=>ec.fillText(c,colX[i],H+42));
+    ec.strokeStyle='#2a3050'; ec.lineWidth=1;
+    ec.beginPath();ec.moveTo(0,H+46);ec.lineTo(W,H+46);ec.stroke();
+    dataPoints.forEach((r,i)=>{
+      const y=H+58+i*20;
+      ec.fillStyle='#8895b3'; ec.font='9px JetBrains Mono,monospace';
+      [i+1,r.d.toFixed(2),r.t.toFixed(3),r.t2.toFixed(3),r.mk_e.toFixed(3)]
+        .forEach((v,j)=>ec.fillText(v,colX[j],y));
+    });
+  }
+  const a=document.createElement('a');
+  a.download='friction_lab_graph.png';
+  a.href=exp.toDataURL('image/png');
+  a.click();
+}
+
+/* ── UNDO — undoes last action: line, pending anchor, or last dot ── */
+function undoLastDot(){
+  // Priority: if line is drawn → remove line, go back to phase 1 (anchor 1 stays)
+  if(linePhase===2 && studentLine){
+    studentLine=null;
+    linePhase=1;  // keep pendingP1 so student only needs to re-click anchor 2
+    document.getElementById('sbadge').innerHTML='';
+    document.getElementById('rMukFit').textContent='draw line on graph →';
+    document.getElementById('graphHint').innerHTML=
+      '↩ Line removed. Click <b style="color:#22d3a0">anchor 2</b> to redraw.';
+    setGraphMode('line');
+    drawGraph();
+    return;
+  }
+  // If waiting for anchor 2 → remove anchor 1, back to phase 0
+  if(linePhase===1 && pendingP1){
+    pendingP1=null;
+    linePhase=0;
+    document.getElementById('graphHint').innerHTML=
+      '↩ Anchor removed. Click <b style="color:#22d3a0">anchor 1</b> to start again.';
+    drawGraph();
+    return;
+  }
+  // Otherwise remove last plotted dot
+  if(studentDots.length>0){
+    studentDots.pop();
+    const n=studentDots.length;
+    document.getElementById('graphHint').innerHTML = n
+      ? `↩ Point removed. ${n} point${n>1?'s':''} remaining.`
+      : '↩ All points removed. Read (t², d) from the table → click to plot.';
+    drawGraph();
+  }
+}
+
+/* ── #5 GRADE student answers ── */
+function gradeAns(which){
+  if(which==='mus'){
+    const val=parseFloat(document.getElementById('ansMusInput').value);
+    const res=document.getElementById('gradeMusResult');
+    const inp=document.getElementById('ansMusInput');
+    if(isNaN(val)){res.className='grade-result';res.textContent=labMode?'':'Enter your μs answer first.';inp.className='ans-input';return;}
+    const pct=Math.abs(val-mus)/mus*100;
+    if(pct<=5){inp.className='ans-input correct';res.className='grade-result ok';res.textContent=`✓ Excellent! Error = ${pct.toFixed(1)}%`;}
+    else if(pct<=15){inp.className='ans-input wrong';res.className='grade-result err';res.textContent=`✗ Close — error = ${pct.toFixed(1)}%. Try refining θ_c.`;}
+    else{inp.className='ans-input wrong';res.className='grade-result err';res.textContent=`✗ Error = ${pct.toFixed(1)}%. Check your θ_c observation.`;}
+  } else {
+    const val=parseFloat(document.getElementById('ansMukInput').value);
+    const res=document.getElementById('gradeMukResult');
+    const inp=document.getElementById('ansMukInput');
+    if(isNaN(val)){res.className='grade-result';res.textContent=labMode?'':'Enter your μk answer first.';inp.className='ans-input';return;}
+    const pct=Math.abs(val-muk)/muk*100;
+    if(pct<=5){inp.className='ans-input correct';res.className='grade-result ok';res.textContent=`✓ Excellent! Error = ${pct.toFixed(1)}%`;}
+    else if(pct<=15){inp.className='ans-input wrong';res.className='grade-result err';res.textContent=`✗ Close — error = ${pct.toFixed(1)}%. Adjust your line.`;}
+    else{inp.className='ans-input wrong';res.className='grade-result err';res.textContent=`✗ Error = ${pct.toFixed(1)}%. Recheck your graph.`;}
+  }
+}
+
+/* ── hover preview crosshair in plot mode ── */
+let hoverPos = null;  // {cx,cy} in CSS canvas coords, or null
+
+/* ── #8 DRAGGABLE ANCHORS ── */
+let draggingAnchor=null;
+let anchorDragEndTime=0;
+
+gc.addEventListener('mousedown',e=>{
+  if(linePhase!==2||!studentLine) return;
+  const rect=gc.getBoundingClientRect();
+  const cx=e.clientX-rect.left, cy=e.clientY-rect.top;
+  const {cx:c1x,cy:c1y}=dataToCanvas(studentLine.p1.gx,studentLine.p1.gy);
+  const {cx:c2x,cy:c2y}=dataToCanvas(studentLine.p2.gx,studentLine.p2.gy);
+  if(Math.hypot(cx-c1x,cy-c1y)<14){draggingAnchor='p1';gc.style.cursor='grabbing';e.preventDefault();}
+  else if(Math.hypot(cx-c2x,cy-c2y)<14){draggingAnchor='p2';gc.style.cursor='grabbing';e.preventDefault();}
+});
+
+gc.addEventListener('mousemove',e=>{
+  const rect=gc.getBoundingClientRect();
+  const cx=e.clientX-rect.left, cy=e.clientY-rect.top;
+
+  if(draggingAnchor&&studentLine){
+    const {W,H}=gcCssSize();
+    const cxc=Math.max(GP.l,Math.min(W-GP.r,cx));
+    const cyc=Math.max(GP.t,Math.min(H-GP.b,cy));
+    const {gx,gy}=canvasToData(cxc,cyc);
+    studentLine[draggingAnchor]={gx,gy};
+    computeStudentSlope(); drawGraph(); return;
+  }
+
+  if(linePhase===2&&studentLine){
+    const {cx:c1x,cy:c1y}=dataToCanvas(studentLine.p1.gx,studentLine.p1.gy);
+    const {cx:c2x,cy:c2y}=dataToCanvas(studentLine.p2.gx,studentLine.p2.gy);
+    gc.style.cursor=(Math.hypot(cx-c1x,cy-c1y)<14||Math.hypot(cx-c2x,cy-c2y)<14)?'grab':'crosshair';
+    hoverPos=null; drawGraph(); return;
+  }
+
+  // plot mode — show preview crosshair at exact mouse position
+  if(graphMode==='plot'){
+    const {W,H}=gcCssSize();
+    if(cx>=GP.l&&cx<=W-GP.r&&cy>=GP.t&&cy<=H-GP.b){
+      hoverPos={cx,cy};
+    } else {
+      hoverPos=null;
+    }
+    drawGraph();
+  }
+});
+
+gc.addEventListener('mouseleave',()=>{
+  draggingAnchor=null; hoverPos=null; drawGraph();
+});
+
+gc.addEventListener('mouseup',()=>{
+  if(draggingAnchor){ anchorDragEndTime=Date.now(); }
+  draggingAnchor=null;
+});
+
+// ── touch support for graph canvas ──
+gc.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1) return;
+  e.preventDefault();
+  const rect=gc.getBoundingClientRect();
+  const cx=e.touches[0].clientX-rect.left, cy=e.touches[0].clientY-rect.top;
+  if(linePhase===2&&studentLine){
+    const {cx:c1x,cy:c1y}=dataToCanvas(studentLine.p1.gx,studentLine.p1.gy);
+    const {cx:c2x,cy:c2y}=dataToCanvas(studentLine.p2.gx,studentLine.p2.gy);
+    if(Math.hypot(cx-c1x,cy-c1y)<22){draggingAnchor='p1';return;}
+    if(Math.hypot(cx-c2x,cy-c2y)<22){draggingAnchor='p2';return;}
+  }
+  if(graphMode==='plot'){const {W,H}=gcCssSize();if(cx>=GP.l&&cx<=W-GP.r&&cy>=GP.t&&cy<=H-GP.b){hoverPos={cx,cy};drawGraph();}}
+},{passive:false});
+
+gc.addEventListener('touchmove',e=>{
+  if(e.touches.length!==1) return;
+  e.preventDefault();
+  const rect=gc.getBoundingClientRect();
+  const cx=e.touches[0].clientX-rect.left, cy=e.touches[0].clientY-rect.top;
+  if(draggingAnchor&&studentLine){
+    const {W,H}=gcCssSize();
+    const cxc=Math.max(GP.l,Math.min(W-GP.r,cx)), cyc=Math.max(GP.t,Math.min(H-GP.b,cy));
+    const {gx,gy}=canvasToData(cxc,cyc);
+    studentLine[draggingAnchor]={gx,gy};
+    computeStudentSlope(); drawGraph();
+  } else if(graphMode==='plot'){
+    const {W,H}=gcCssSize();
+    if(cx>=GP.l&&cx<=W-GP.r&&cy>=GP.t&&cy<=H-GP.b){hoverPos={cx,cy};drawGraph();}
+  }
+},{passive:false});
+
+gc.addEventListener('touchend',e=>{
+  e.preventDefault();
+  hoverPos=null;
+  if(draggingAnchor){anchorDragEndTime=Date.now();draggingAnchor=null;drawGraph();return;}
+  if(e.changedTouches.length!==1) return;
+  const rect=gc.getBoundingClientRect();
+  const cx=e.changedTouches[0].clientX-rect.left, cy=e.changedTouches[0].clientY-rect.top;
+  const {W,H}=gcCssSize();
+  if(cx<GP.l||cx>W-GP.r||cy<GP.t||cy>H-GP.b){drawGraph();return;}
+  const raw=canvasToData(cx,cy);
+  if(graphMode==='plot'){
+    studentDots.push({gx:raw.gx,gy:raw.gy});
+    const n=studentDots.length;
+    document.getElementById('graphHint').innerHTML=`${n} point${n>1?'s':''} plotted. Switch to <b style="color:#22d3a0">⟋ Draw line</b> when ready.`;
+    drawGraph();
+  } else {
+    if(linePhase===2) return;
+    if(linePhase===0){
+      pendingP1=raw;linePhase=1;
+      document.getElementById('graphHint').innerHTML='✓ Anchor 1 set. Tap anchor 2 to complete line.';
+      drawGraph();
+    } else {
+      if(Math.abs(raw.gx-pendingP1.gx)<1e-9){drawGraph();return;}
+      studentLine={p1:pendingP1,p2:raw};linePhase=2;
+      computeStudentSlope();
+      document.getElementById('graphHint').innerHTML='✓ Line drawn — drag anchors to fine-tune.';
+      drawGraph();
+    }
+  }
+},{passive:false});
+
+gc.addEventListener('click',e=>{
+  if(Date.now()-anchorDragEndTime < 200) return;
+  const rect=gc.getBoundingClientRect();
+  const cx=e.clientX-rect.left, cy=e.clientY-rect.top;
+  const {W,H}=gcCssSize();
+  if(cx<GP.l||cx>W-GP.r||cy<GP.t||cy>H-GP.b) return;
+  const raw=canvasToData(cx,cy);  // exact position, no snapping
+
+  if(graphMode==='plot'){
+    studentDots.push({gx:raw.gx, gy:raw.gy});
+    const n=studentDots.length;
+    document.getElementById('graphHint').innerHTML=
+      `${n} point${n>1?'s':''} plotted. Switch to <b style="color:#22d3a0">⟋ Draw line</b> when ready.`;
+    drawGraph();
+  } else {
+    if(linePhase===2) return;
+    if(linePhase===0){
+      pendingP1=raw; linePhase=1;
+      document.getElementById('graphHint').innerHTML=
+        '✓ Anchor 1 set. Click <b style="color:#22d3a0">anchor 2</b> to complete the line.';
+      drawGraph();
+    } else {
+      if(Math.abs(raw.gx-pendingP1.gx)<1e-9){
+        document.getElementById('graphHint').innerHTML='⚠ Click further along x-axis.';
+        return;
+      }
+      studentLine={p1:pendingP1,p2:raw};
+      linePhase=2;
+      computeStudentSlope();
+      document.getElementById('graphHint').innerHTML=
+        '✓ Line drawn — <b style="color:#22d3a0">drag the anchors</b> to fine-tune it.';
+      drawGraph();
+    }
+  }
+});
+
+function computeStudentSlope(){
+  if(!studentLine) return;
+  const {p1,p2}=studentLine;
+  const slope=(p2.gy-p1.gy)/(p2.gx-p1.gx);
+  const afit=2*slope;
+  const thr=angle*Math.PI/180;
+  const mkfit=Math.max(0,Math.tan(thr)-afit/(G*Math.cos(thr)));
+  const sS=slope.toFixed(4), aS=afit.toFixed(3), mS=mkfit.toFixed(3);
+  document.getElementById('rMukFit').textContent = labMode ? '(switch to Check Mode to reveal)' : mkfit.toFixed(3);
+  document.getElementById('sbadge').innerHTML = labMode
+    ? `<div class="sbadge">Your slope = ${sS} → a = ${aS} m/s² &nbsp;<span style="filter:blur(5px);user-select:none">μk≈${mS}</span></div>`
+    : `<div class="sbadge" style="background:rgba(34,211,160,.12);border-color:rgba(34,211,160,.3);color:var(--green)">Your slope = ${sS} → a = ${aS} m/s² → μk ≈ ${mS}</div>`;
+}
+
+/* ── GRAPH DRAW ── */
+function drawGraph(){
+  const {W,H}=gcCssSize();
+  gctx.clearRect(0,0,W,H);
+  gctx.fillStyle='#0f1117'; gctx.fillRect(0,0,W,H);
+  const pw=W-GP.l-GP.r, ph=H-GP.t-GP.b;
+
+  // grid — 20 divisions
+  const GRID=20;
+  const {xmin,xmax,ymin,ymax,xStep,yStep} = graphDataRange();
+  const px=gx=>GP.l+((gx-xmin)/(xmax-xmin))*pw;
+  const py=gy=>GP.t+ph-((gy-ymin)/(ymax-ymin))*ph;
+
+  // grid — 20×20 divisions, every 5th line brighter
+  for(let i=0;i<=GRID;i++){
+    const isMaj = (i%5===0);
+    gctx.strokeStyle = isMaj ? '#2e3a5c' : '#1a2030';
+    gctx.lineWidth   = isMaj ? 1.2 : 0.7;
+    gctx.beginPath();gctx.moveTo(GP.l,GP.t+ph*i/GRID);gctx.lineTo(GP.l+pw,GP.t+ph*i/GRID);gctx.stroke();
+    gctx.beginPath();gctx.moveTo(GP.l+pw*i/GRID,GP.t);gctx.lineTo(GP.l+pw*i/GRID,GP.t+ph);gctx.stroke();
+  }
+  // axes
+  gctx.strokeStyle='#3a4a7a'; gctx.lineWidth=2;
+  gctx.beginPath();gctx.moveTo(GP.l,GP.t);gctx.lineTo(GP.l,GP.t+ph);gctx.stroke();
+  gctx.beginPath();gctx.moveTo(GP.l,GP.t+ph);gctx.lineTo(GP.l+pw,GP.t+ph);gctx.stroke();
+
+  // axis title labels
+  gctx.fillStyle='#8895b3'; gctx.font='bold 11px JetBrains Mono'; gctx.textAlign='center';
+  gctx.fillText('t² (s²)', GP.l+pw/2, H-2);
+  gctx.save(); gctx.translate(11, GP.t+ph/2); gctx.rotate(-Math.PI/2);
+  gctx.fillText('d (m)', 0, 0); gctx.restore();
+
+  // tick labels — every division, clean values from step size
+  const xDec = Math.max(0, -Math.floor(Math.log10(xStep)));
+  const yDec = Math.max(0, -Math.floor(Math.log10(yStep)));
+
+  for(let i=0;i<=GRID;i++){
+    const xv = +(xmin + xStep*i).toFixed(xDec);
+    const yv = +(ymax - yStep*i).toFixed(yDec);
+    const isMaj = (i%5===0);
+    gctx.fillStyle  = isMaj ? '#8895b3' : '#556080';
+    gctx.font       = isMaj ? 'bold 9px JetBrains Mono' : '8px JetBrains Mono';
+
+    // y-axis
+    gctx.textAlign='right';
+    gctx.fillText(yv.toFixed(yDec), GP.l-5, GP.t+ph*i/GRID+3);
+    gctx.strokeStyle=isMaj?'#4a5570':'#2e3a5c'; gctx.lineWidth=1;
+    gctx.beginPath(); gctx.moveTo(GP.l-3,GP.t+ph*i/GRID); gctx.lineTo(GP.l,GP.t+ph*i/GRID); gctx.stroke();
+
+    // x-axis
+    gctx.textAlign='center';
+    gctx.fillText(xv.toFixed(xDec), GP.l+pw*i/GRID, GP.t+ph+12);
+    gctx.beginPath(); gctx.moveTo(GP.l+pw*i/GRID,GP.t+ph); gctx.lineTo(GP.l+pw*i/GRID,GP.t+ph+3); gctx.stroke();
+  }
+
+  if(!dataPoints.length){
+    gctx.fillStyle='#3d4a6b'; gctx.font='11px JetBrains Mono'; gctx.textAlign='center';
+    gctx.fillText('record runs → read table → plot here',W/2,GP.t+ph/2);
+    // still show hover crosshair even with no data
+  }
+
+  // ── hover preview crosshair (plot mode only) ──
+  if(graphMode==='plot' && hoverPos){
+    const {cx:hx, cy:hy} = hoverPos;
+    const {gx:hgx, gy:hgy} = canvasToData(hx, hy);
+    const xDec2=Math.max(0,-Math.floor(Math.log10(xStep)));
+    const yDec2=Math.max(0,-Math.floor(Math.log10(yStep)));
+    // full crosshair lines
+    gctx.strokeStyle='rgba(249,115,22,.35)'; gctx.lineWidth=1; gctx.setLineDash([4,4]);
+    gctx.beginPath(); gctx.moveTo(hx,GP.t); gctx.lineTo(hx,GP.t+ph); gctx.stroke();
+    gctx.beginPath(); gctx.moveTo(GP.l,hy); gctx.lineTo(GP.l+pw,hy); gctx.stroke();
+    gctx.setLineDash([]);
+    // preview dot
+    gctx.fillStyle='rgba(249,115,22,.5)';
+    gctx.beginPath(); gctx.arc(hx,hy,5,0,Math.PI*2); gctx.fill();
+    // coordinate label
+    const lbl=`(${hgx.toFixed(xDec2)}, ${hgy.toFixed(yDec2)})`;
+    const lblX=Math.min(hx+8, W-GP.r-60), lblY=Math.max(hy-8, GP.t+14);
+    gctx.fillStyle='rgba(15,17,23,.85)'; gctx.fillRect(lblX-2,lblY-12,lbl.length*6+8,14);
+    gctx.fillStyle='#f97316'; gctx.font='bold 9px JetBrains Mono'; gctx.textAlign='left';
+    gctx.fillText(lbl, lblX+2, lblY-1);
+  }
+
+  if(!dataPoints.length) return;
+
+  // ── student-placed dots — orange × with position crosshair ──
+  studentDots.forEach(({gx,gy},idx)=>{
+    const {cx,cy}=dataToCanvas(gx,gy);
+    const s=6;
+    // subtle snap crosshair lines
+    gctx.strokeStyle='rgba(249,115,22,.2)'; gctx.lineWidth=1;
+    gctx.beginPath(); gctx.moveTo(cx,GP.t); gctx.lineTo(cx,GP.t+ph); gctx.stroke();
+    gctx.beginPath(); gctx.moveTo(GP.l,cy); gctx.lineTo(GP.l+pw,cy); gctx.stroke();
+    // × mark
+    gctx.strokeStyle='#f97316'; gctx.lineWidth=2.5;
+    gctx.shadowColor='rgba(249,115,22,.5)'; gctx.shadowBlur=6;
+    gctx.beginPath(); gctx.moveTo(cx-s,cy-s); gctx.lineTo(cx+s,cy+s); gctx.stroke();
+    gctx.beginPath(); gctx.moveTo(cx+s,cy-s); gctx.lineTo(cx-s,cy+s); gctx.stroke();
+    gctx.shadowBlur=0;
+    // point index label
+    gctx.fillStyle='#f97316'; gctx.font='bold 8px JetBrains Mono'; gctx.textAlign='left';
+    gctx.fillText(idx+1, cx+8, cy-4);
+  });
+
+  // ── pending line anchor 1 ──
+  if(graphMode==='line' && linePhase===1 && pendingP1){
+    const {cx,cy}=dataToCanvas(pendingP1.gx,pendingP1.gy);
+    gctx.strokeStyle='#22d3a0'; gctx.lineWidth=1.5;
+    gctx.beginPath(); gctx.arc(cx,cy,8,0,Math.PI*2); gctx.stroke();
+    gctx.beginPath(); gctx.moveTo(cx-12,cy); gctx.lineTo(cx+12,cy); gctx.stroke();
+    gctx.beginPath(); gctx.moveTo(cx,cy-12); gctx.lineTo(cx,cy+12); gctx.stroke();
+  }
+
+  // ── student best-fit line (green) ──
+  if(studentLine){
+    const {p1,p2}=studentLine;
+    const slope=(p2.gy-p1.gy)/(p2.gx-p1.gx);
+    const icpt=p1.gy-slope*p1.gx;
+    gctx.save();
+    gctx.strokeStyle='#22d3a0'; gctx.lineWidth=2;
+    gctx.shadowColor='rgba(34,211,160,.4)'; gctx.shadowBlur=8;
+    gctx.beginPath();
+    gctx.moveTo(px(xmin),py(slope*xmin+icpt));
+    gctx.lineTo(px(xmax),py(slope*xmax+icpt));
+    gctx.stroke();
+    gctx.shadowBlur=0; gctx.restore();
+    // #8 draggable anchor markers — filled circle + outer drag ring
+    [p1,p2].forEach(({gx,gy},i)=>{
+      const {cx,cy}=dataToCanvas(gx,gy);
+      // outer drag-hint ring
+      gctx.strokeStyle='rgba(34,211,160,.35)'; gctx.lineWidth=1.5;
+      gctx.beginPath(); gctx.arc(cx,cy,13,0,Math.PI*2); gctx.stroke();
+      // filled dot
+      gctx.fillStyle='#22d3a0';
+      gctx.shadowColor='rgba(34,211,160,.5)'; gctx.shadowBlur=8;
+      gctx.beginPath(); gctx.arc(cx,cy,6,0,Math.PI*2); gctx.fill();
+      gctx.shadowBlur=0;
+      // number
+      gctx.fillStyle='#0f1117'; gctx.font='bold 9px Syne'; gctx.textAlign='center';
+      gctx.fillText(i+1,cx,cy+3.5);
+    });
+    // slope label — clamped to stay inside plot area
+    const midGx=(p1.gx+p2.gx)/2, midGy=(p1.gy+p2.gy)/2;
+    const {cx:mcxRaw, cy:mcyRaw}=dataToCanvas(midGx,midGy);
+    const lblW=96, lblH=20, margin=4;
+    const mcx = Math.min(Math.max(mcxRaw, GP.l+lblW/2+margin), GP.l+pw-lblW/2-margin);
+    const mcy = Math.min(Math.max(mcyRaw, GP.t+lblH+margin),   GP.t+ph-margin);
+    gctx.fillStyle='rgba(15,17,23,.92)'; gctx.fillRect(mcx-lblW/2,mcy-lblH,lblW,lblH);
+    gctx.fillStyle='#22d3a0'; gctx.font='bold 10px JetBrains Mono'; gctx.textAlign='center';
+    gctx.fillText('slope = '+slope.toFixed(3),mcx,mcy-5);
+  }
+
+  // ── check mode: true dots (blue ●) + regression line (dashed orange) ──
+  if(!labMode){
+    // true data dots
+    dataPoints.forEach(r=>{
+      const {cx,cy}=dataToCanvas(r.t2,r.d);
+      gctx.fillStyle='#4f8ef7';
+      gctx.shadowColor='rgba(79,142,247,.5)'; gctx.shadowBlur=7;
+      gctx.beginPath(); gctx.arc(cx,cy,5,0,Math.PI*2); gctx.fill();
+      gctx.shadowBlur=0;
+    });
+    // true regression line
+    if(dataPoints.length>=2){
+      const xs=dataPoints.map(r=>r.t2),ys=dataPoints.map(r=>r.d),n=xs.length;
+      const sx=xs.reduce((a,b)=>a+b,0),sy=ys.reduce((a,b)=>a+b,0);
+      const sxy=dataPoints.reduce((s,r)=>s+r.t2*r.d,0),sx2=xs.reduce((s,x)=>s+x*x,0);
+      const ts=(n*sxy-sx*sy)/(n*sx2-sx*sx), ti=(sy-ts*sx)/n;
+      const afit=2*ts, thr=angle*Math.PI/180;
+      const mkfit=Math.max(0,Math.tan(thr)-afit/(G*Math.cos(thr)));
+      gctx.save();
+      gctx.strokeStyle='#f97316'; gctx.lineWidth=1.5; gctx.setLineDash([5,4]);
+      gctx.shadowColor='rgba(249,115,22,.3)'; gctx.shadowBlur=5;
+      gctx.beginPath();
+      gctx.moveTo(px(xmin),py(ts*xmin+ti));
+      gctx.lineTo(px(xmax),py(ts*xmax+ti));
+      gctx.stroke();
+      gctx.setLineDash([]); gctx.shadowBlur=0; gctx.restore();
+      gctx.fillStyle='#f97316'; gctx.font='9px JetBrains Mono'; gctx.textAlign='right';
+      gctx.fillText('true fit  μk='+mkfit.toFixed(3),GP.l+pw-4,py(ts*xmax+ti)-7);
+      // update live result
+      document.getElementById('rMukFit').textContent = studentLine
+        ? document.getElementById('rMukFit').textContent  // keep student's value
+        : mkfit.toFixed(3);
+    }
+    // legend
+    gctx.fillStyle='#4f8ef7'; gctx.font='9px JetBrains Mono'; gctx.textAlign='left';
+    gctx.fillText('● true data',GP.l+4,GP.t+12);
+    gctx.fillStyle='#f97316';
+    gctx.fillText('-- true fit',GP.l+4,GP.t+24);
+  }
+}
+
+/* ══════════════════════════════════════════════
+   BILINGUAL SUPPORT — English / Arabic
+══════════════════════════════════════════════ */
+let lang = 'en';
+
+const TR = {
+  en: {
+    'title':        'Inclined Plane · Friction Lab',
+    'credit':       'Created by: Onais Madkhali',
+    'labMode':      'Lab Mode',
+    'checkMode':    'Check Mode',
+    'langBtn':      'العربية',
+    'planeSettings':'Plane Settings',
+    'angleLabel':   'Angle θ',
+    'massLabel':    'Mass m',
+    'fgLabel':      'Fg·sinθ',
+    'ffLabel':      'Friction',
+    'fnLabel':      'Net F',
+    'acLabel':      'Accel',
+    'musTitle':     'Static μs (true value)',
+    'mukTitle':     'Kinetic μk (true value)',
+    'recData':      'Recorded Data',
+    'newChallenge': '🎲 New Challenge',
+    'nodata':       'Drag box → raise θ → record each run',
+    'stopwatch':    'Stopwatch',
+    'recordBtn':    '+ Record (d, t)',
+    'resetBtn':     '⟳ Reset',
+    'findMusTitle': 'Finding μs',
+    'ms1': 'Slowly increase θ',
+    'ms2': 'Note angle when box just starts sliding → θ_c',
+    'findMukTitle': 'Finding μk',
+    'mk1': 'Drag box up slope → sets d',
+    'mk2': 'Raise θ above θ_c → slides, timer starts',
+    'mk3': 'Press <b style="color:var(--orange)">Record</b> — read (d, t²) from table',
+    'mk4': 'Repeat for ≥3 different d values',
+    'mk5': 'Switch graph to <b style="color:#f97316">● Plot points</b>',
+    'mk6': '→ click to place each (t², d) dot',
+    'mk7': 'Switch to <b style="color:#22d3a0">⟋ Draw line</b>',
+    'mk8': '→ click 2 anchors for best-fit line',
+    'yourMeasure':  'Your Measurements',
+    'critObs':      'critical angle θ_c (you observe)',
+    'musAns':       'your μs = tan(θ_c) — type your answer',
+    'gradedIn':     'graded in Check Mode',
+    'gradedIn2':    'graded in Check Mode',
+    'mukAns':       'μk from graph slope — type your answer',
+    'trueVals':     'True values (Check Mode)',
+    'closestMat':   'Closest real-world surface pair',
+    'graphTitle':   'd vs t² — Student Graph',
+    'swNoteStatic': 'raise θ past critical angle to slide',
+    'swNoteSliding':'sliding… — press Record anytime',
+    'swNoteStopped':'stopped — Record or drag box & raise θ again',
+    'swNoteRecorded':'recorded ✓ — keep sliding or drag again',
+    'rMukDefault':  'draw line on graph →',
+    'nodataText':   'Drag box → raise θ → record each run',
+    'statusStatic': 'STATIC',
+    'statusSlide':  'SLIDING',
+    'statusDrag':   'DRAG',
+    'statusStaticHint': 'increase θ until box slides',
+    'statusSlideHint':  'lower θ to stop the box',
+    'graphHintDefault': 'Read (t², d) from the table → click on the grid to plot each point.',
+    'graphHintPlot':    (n)=>`${n} point${n>1?'s':''} plotted. Switch to <b style="color:#22d3a0">⟋ Draw line</b> when ready.`,
+    'graphHintA1':  'Click <b style="color:#22d3a0">anchor 1</b> then <b style="color:#22d3a0">anchor 2</b> to draw your best-fit line.',
+    'graphHintA1Done':'✓ Anchor 1 set. Click <b style="color:#22d3a0">anchor 2</b> to complete the line.',
+    'graphHintLineDone':'✓ Line drawn — <b style="color:#22d3a0">drag the anchors</b> to fine-tune it.',
+    'critObs_sliding':  (a)=>`${a}° (currently sliding)`,
+    'critObs_static':   'increase θ until box slides',
+  },
+  ar: {
+    'title':        'مستوى مائل · مختبر الاحتكاك',
+    'credit':       'إعداد: أنس مدخلي',
+    'labMode':      'وضع التجربة',
+    'checkMode':    'وضع التحقق',
+    'langBtn':      'English',
+    'planeSettings':'إعدادات المستوى',
+    'angleLabel':   'الزاوية θ',
+    'massLabel':    'الكتلة m',
+    'fgLabel':      'مركبة الثقل',
+    'ffLabel':      'الاحتكاك',
+    'fnLabel':      'المحصلة',
+    'acLabel':      'التسارع',
+    'musTitle':     'معامل الاحتكاك الساكن μs (القيمة الحقيقية)',
+    'mukTitle':     'معامل الاحتكاك الحركي μk (القيمة الحقيقية)',
+    'recData':      'البيانات المسجلة',
+    'newChallenge': '🎲 تحدٍّ جديد',
+    'nodata':       'اسحب الصندوق ← ارفع θ ← سجّل كل تجربة',
+    'stopwatch':    'الساعة التوقف',
+    'recordBtn':    '+ تسجيل (d, t)',
+    'resetBtn':     '⟳ إعادة',
+    'findMusTitle': 'إيجاد μs',
+    'ms1': 'زد الزاوية θ تدريجياً',
+    'ms2': 'لاحظ الزاوية عند بداية انزلاق الصندوق → θ_c',
+    'findMukTitle': 'إيجاد μk',
+    'mk1': 'اسحب الصندوق إلى أعلى المستوى لتحديد المسافة d',
+    'mk2': 'ارفع θ فوق θ_c ← يبدأ الانزلاق وتبدأ الساعة',
+    'mk3': 'اضغط <b style="color:var(--orange)">تسجيل</b> ← اقرأ (d, t²) من الجدول',
+    'mk4': 'كرر ذلك لـ ≥3 قيم مختلفة لـ d',
+    'mk5': 'حوّل الرسم إلى <b style="color:#f97316">● رسم النقاط</b>',
+    'mk6': '← انقر لوضع كل نقطة (t², d)',
+    'mk7': 'ثم حوّل إلى <b style="color:#22d3a0">⟋ رسم الخط</b>',
+    'mk8': '← انقر نقطتين لرسم خط الانسجام الأفضل',
+    'yourMeasure':  'قياساتك',
+    'critObs':      'الزاوية الحرجة θ_c (ما تلاحظه)',
+    'musAns':       'μs = tan(θ_c) — اكتب إجابتك',
+    'gradedIn':     'يُصحَّح في وضع التحقق',
+    'gradedIn2':    'يُصحَّح في وضع التحقق',
+    'mukAns':       'μk من ميل الرسم — اكتب إجابتك',
+    'trueVals':     'القيم الحقيقية (وضع التحقق)',
+    'closestMat':   'أقرب زوج سطحي في الواقع',
+    'graphTitle':   'd مقابل t² — الرسم البياني',
+    'swNoteStatic': 'ارفع θ فوق الزاوية الحرجة لبدء الانزلاق',
+    'swNoteSliding':'يتحرك… اضغط تسجيل في أي وقت',
+    'swNoteStopped':'توقف — سجّل أو اسحب الصندوق وارفع θ مجدداً',
+    'swNoteRecorded':'تم التسجيل ✓ — يمكن الاستمرار أو السحب مجدداً',
+    'rMukDefault':  'ارسم خطاً على الرسم البياني →',
+    'nodataText':   'اسحب الصندوق ← ارفع θ ← سجّل كل تجربة',
+    'statusStatic': 'ساكن',
+    'statusSlide':  'منزلق',
+    'statusDrag':   'سحب',
+    'statusStaticHint': 'زد θ حتى يبدأ الصندوق بالانزلاق',
+    'statusSlideHint':  'خفّض θ لإيقاف الصندوق',
+    'graphHintDefault': 'اقرأ (t², d) من الجدول ← انقر على الشبكة لرسم كل نقطة.',
+    'graphHintPlot':    (n)=>`تم رسم ${n} نقطة. حوّل إلى <b style="color:#22d3a0">⟋ رسم الخط</b> عند الانتهاء.`,
+    'graphHintA1':  'انقر <b style="color:#22d3a0">النقطة 1</b> ثم <b style="color:#22d3a0">النقطة 2</b> لرسم الخط.',
+    'graphHintA1Done':'✓ النقطة 1 محددة. انقر <b style="color:#22d3a0">النقطة 2</b> لإكمال الخط.',
+    'graphHintLineDone':'✓ تم رسم الخط — <b style="color:#22d3a0">اسحب النقاط</b> لضبط الخط.',
+    'critObs_sliding':  (a)=>`${a}° (يتحرك الآن)`,
+    'critObs_static':   'زد θ حتى يبدأ الصندوق بالانزلاق',
+  }
+};
+
+function t(key, ...args){
+  const val = TR[lang][key];
+  if(typeof val === 'function') return val(...args);
+  return val || TR['en'][key] || key;
+}
+
+function applyLang(){
+  const isAr = lang==='ar';
+  document.body.dir = isAr ? 'rtl' : 'ltr';
+  document.body.classList.toggle('ar', isAr);
+
+  // static text elements
+  const map = {
+    't-title':        t('title'),
+    't-credit':       t('credit'),
+    't-labMode':      t('labMode'),
+    't-checkMode':    t('checkMode'),
+    'langBtn':        t('langBtn'),
+    't-planeSettings':t('planeSettings'),
+    't-angleLabel':   t('angleLabel')+` <span class="cv" id="aOut">${(+angle).toFixed(1)}°</span>`,
+    't-massLabel':    t('massLabel'),
+    't-fgLabel':      t('fgLabel'),
+    't-ffLabel':      t('ffLabel'),
+    't-fnLabel':      t('fnLabel'),
+    't-acLabel':      t('acLabel'),
+    't-musTitle':     t('musTitle'),
+    't-mukTitle':     t('mukTitle'),
+    't-recData':      t('recData'),
+    't-newChallenge': t('newChallenge'),
+    't-stopwatch':    t('stopwatch'),
+    't-recordBtn':    t('recordBtn'),
+    't-resetBtn':     t('resetBtn'),
+    't-findMusTitle': t('findMusTitle'),
+    't-ms1':          t('ms1'),
+    't-ms2':          t('ms2'),
+    't-findMukTitle': t('findMukTitle'),
+    't-mk1':  t('mk1'), 't-mk2': t('mk2'), 't-mk3': t('mk3'),
+    't-mk4':  t('mk4'), 't-mk5': t('mk5'), 't-mk6': t('mk6'),
+    't-mk7':  t('mk7'), 't-mk8': t('mk8'),
+    't-yourMeasure':  t('yourMeasure'),
+    't-critObs':      t('critObs'),
+    't-musAns':       t('musAns'),
+    't-gradedIn':     t('gradedIn'),
+    't-gradedIn2':    t('gradedIn2'),
+    't-mukAns':       t('mukAns'),
+    't-trueVals':     t('trueVals'),
+    't-closestMat':   t('closestMat'),
+    't-graphTitle':   t('graphTitle'),
+  };
+  Object.entries(map).forEach(([id,html])=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=html;
+  });
+
+  // re-attach aOut after innerHTML replacement of t-angleLabel
+  document.getElementById('aSl').oninput = e => {
+    angle = +e.target.value;
+    const el = document.getElementById('aOut');
+    if(el) el.textContent = (+angle).toFixed(1)+'°';
+    onAngleOrMuChange();
+  };
+
+  // update dynamic text
+  document.getElementById('swNote').textContent = simRunning ? t('swNoteSliding') : t('swNoteStatic');
+  const rMukEl = document.getElementById('rMukFit');
+  if(rMukEl && rMukEl.textContent.trim() === TR['en']['rMukDefault'] ||
+     rMukEl && rMukEl.textContent.trim() === TR['ar']['rMukDefault'])
+    rMukEl.textContent = t('rMukDefault');
+  const nodata = document.getElementById('nodata');
+  if(nodata) nodata.textContent = t('nodataText');
+
+  // banner
+  const banner = document.getElementById('modeBanner');
+  if(labMode){
+    banner.style.borderColor='rgba(34,211,160,.2)';
+    banner.style.background='rgba(34,211,160,.07)';
+    banner.innerHTML = isAr
+      ? `<b style="color:var(--green)">وضع التجربة</b> — μs و μk مخفيان. قِس θ_c لحساب μs = tan(θ_c). اسحب الصندوق، ارفع θ، سجّل بيانات (d,t) → ميل الرسم يعطي μk. انتقل إلى <b>وضع التحقق</b> للمراجعة.`
+      : `<b style="color:var(--green)">Lab Mode</b> — μs and μk are hidden. Measure θ_c to get μs = tan(θ_c). Drag box, raise θ, record (d,t) pairs → graph slope gives μk. Switch to <b>Check Mode</b> to verify.`;
+  } else {
+    banner.style.borderColor='rgba(249,115,22,.25)';
+    banner.style.background='rgba(249,115,22,.06)';
+    banner.innerHTML = isAr
+      ? `<b style="color:var(--orange)">وضع التحقق</b> — القيم الحقيقية لـ μs و μk ظاهرة الآن. قارن قياساتك بالقيم المضبوطة.`
+      : `<b style="color:var(--orange)">Check Mode</b> — True μs and μk sliders are now visible. Compare your measured values with the set values.`;
+  }
+}
+
+function toggleLang(){
+  lang = lang==='en' ? 'ar' : 'en';
+  applyLang();
+  update();
+  drawGraph();
+}
+
+/* ── init ── */
+resize();
+update();
+</script>
+</body>
+</html>
